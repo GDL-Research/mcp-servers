@@ -4,13 +4,6 @@ from qiskit_ibm_transpiler_mcp_server.sync import (
     ai_linear_function_synthesis_sync,
     ai_pauli_network_synthesis_sync,
     ai_permutation_synthesis_sync,
-    # get_backend_service_sync,
-    # least_busy_backend_sync,
-    # list_backends_sync,
-    # get_backend_properties_sync,
-    # list_my_jobs_sync,
-    # cancel_job_sync,
-    # get_job_status_sync,
 )
 from tests.utils.helpers import calculate_2q_count_and_depth_improvement
 import pytest
