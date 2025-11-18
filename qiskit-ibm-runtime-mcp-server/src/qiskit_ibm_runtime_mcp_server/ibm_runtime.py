@@ -466,5 +466,125 @@ async def get_service_status() -> str:
         status_info = {"connected": False, "error": str(e), "service": "IBM Quantum"}
         return f"IBM Quantum Service Status: {status_info}"
 
+async def delete_saved_account(filename: str = None, name: str = None, channel: ChannelType = None,) -> str:
+    """Delete a saved account.
+    Args:
+        filename: Name of file from which to delete the account.
+        name: Name of the saved account to delete.
+        channel: Channel type of the default account to delete.
+            Ignored if account name is provided.
+
+    Returns:
+    Information about if an account was deleted.
+    """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        service.delete_account(filename=filename, name=name, channel=channel)
+
+        delete_info = {
+            "deleted": True,
+            "channel": channel,
+            "name":name
+        }
+        return f"Account successfully deleted {delete_info}"
+    except Exception as e:
+        logger.error(f"Failed to delete account: {e}")
+        delete_info = {"deleted": False, "filename": filename, "name": name, "channel": channel, "error": str(e)}
+        return f"Error deleting account: {delete_info}"
+    
+async def list_saved_account(default: str = None, channel: ChannelType = None, filename: str = None, name: str = None) -> str:
+    """List the accounts saved on disk.
+    Args:
+        default: If set to True, only default accounts are returned.
+        channel: Channel type.``ibm_cloud`` or ``ibm_quantum_platform``.
+        filename: Name of file whose accounts are returned.
+        name: If set, only accounts with the given name are returned.
+
+    Returns:
+        List of all saved accounts.
+    """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        accounts_list = service.saved_accounts(filename=filename, name=name, channel=channel)
+        return f"Account list: {accounts_list}"
+    except Exception as e:
+        logger.error(f"Failed to collect accounts: {e}")
+        collect_info = {"collect": False, "filename": filename, "name": name, "channel": channel, "error": str(e)}
+        return f"Error collecting accounts: {collect_info}"
+    
+async def active_account_info() -> str:
+    """
+    Return the IBM Quantum account currently in use for the session.
+        Returns:
+            A dictionary with information about the account currently in the session.
+        """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        active_account_info = service.active_account()
+        return f"Active account info: {active_account_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect active account: {e}")
+        active_account_info = {"collect": False, "error": str(e)}
+        return f"Error collecting active account: {active_account_info}"
+
+async def active_instance_info() -> str:
+    """Return the crn of the current active instance."""
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        active_instance_info = service.active_instance()
+        return f"Active instance crn: {active_instance_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect instance crn: {e}")
+        active_instance_info = {"collect": False, "error": str(e)}
+        return f"Error collecting active instance crn: {active_instance_info}"
+
+async def available_instances() -> str:
+    """Return a list that contains a series of dictionaries with the
+            following instance identifiers per instance: "crn", "plan", "name".
+
+        Returns:
+            Instances available for the active account.
+        """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        available_instances_info = service.instances()
+        return f"Available instances for the active account: {available_instances_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect available instances for the active account: {e}")
+        available_instances_info = {"collect": False, "error": str(e)}
+        return f"Error collecting available instances for the active account: {available_instances_info}"
+    
+async def usage_info() -> str:
+    """Return usage information for the current active instance.
+
+        Returns:
+            Instance usage details.
+        """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        usage_info = service.usage()
+        return f"Usage information: {usage_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect usage information: {e}")
+        usage_info = {"collect": False, "error": str(e)}
+        return f"Error collecting usage information: {usage_info}"
 
 # Assisted by watsonx Code Assistant
