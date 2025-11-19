@@ -16,7 +16,9 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
+from qiskit_ibm_runtime.accounts import ChannelType
 from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore[import-untyped]
+from qiskit_ibm_runtime import EstimatorV2
 
 
 def least_busy(backends):
@@ -52,8 +54,9 @@ def get_token_from_env() -> Optional[str]:
 
 logger = logging.getLogger(__name__)
 
-# Global service instance
+# Global service instances
 service: Optional[QiskitRuntimeService] = None
+estimator_service: Optional[EstimatorV2] = None
 
 
 def initialize_service(
@@ -120,6 +123,43 @@ def initialize_service(
             logger.error(f"Failed to initialize IBM Runtime service: {e}")
         raise
 
+def initialize_estimator(
+    mode = None,
+    options = None
+) -> EstimatorV2:
+    """Initialize the EstimatorV2 instance.
+
+    This helper creates an :class:`qiskit_ibm_runtime.EstimatorV2` that
+    interacts with Qiskit Runtime Estimator primitive service.
+        Qiskit Runtime Estimator primitive service estimates expectation values of quantum circuits and
+        observables.
+
+    Args:
+            mode: The execution mode used to make the primitive query. It can be:
+
+                * A :class:`Backend` if you are using job mode.
+                * A :class:`Session` if you are using session execution mode.
+                * A :class:`Batch` if you are using batch execution mode.
+
+                Refer to the
+                `Qiskit Runtime documentation
+                <https://quantum.cloud.ibm.com/docs/guides/execution-modes>`_
+                for more information about the ``Execution modes``.
+
+            options: Estimator options, see :class:`EstimatorOptions` for detailed description.
+
+    Returns:
+        EstimatorV2: The initialized estimator.
+    """
+    global estimator_service
+    try:
+        # Create the estimator that talks to the quantum back‑ends.
+        estimator_service = EstimatorV2(mode=mode, options=options)
+        logger.info("Successfully initialized EstimatorV2.")
+        return estimator_service
+    except Exception as e:
+        logger.error(f"Failed to initialize EstimatorV2: {e}")
+        raise
 
 async def setup_ibm_quantum_account(
     token: Optional[str] = None, channel: str = "ibm_quantum_platform"
@@ -482,7 +522,7 @@ async def delete_saved_account(filename: str = None, name: str = None, channel: 
     try:
         if service is None:
             service = initialize_service()
-        service.delete_account(filename=filename, name=name, channel=channel)
+        service.delete_account(filename, name, channel)
 
         delete_info = {
             "deleted": True,
@@ -511,7 +551,7 @@ async def list_saved_account(default: str = None, channel: ChannelType = None, f
     try:
         if service is None:
             service = initialize_service()
-        accounts_list = service.saved_accounts(filename=filename, name=name, channel=channel)
+        accounts_list = service.saved_accounts(filename, name, channel)
         return f"Account list: {accounts_list}"
     except Exception as e:
         logger.error(f"Failed to collect accounts: {e}")
@@ -586,5 +626,34 @@ async def usage_info() -> str:
         logger.error(f"Failed to collect usage information: {e}")
         usage_info = {"collect": False, "error": str(e)}
         return f"Error collecting usage information: {usage_info}"
+
+async def estimator_run(pubs = None, precision = None) -> str:
+    """Submit a request to the estimator primitive.
+
+        Args:
+            pubs: An iterable of pub-like (primitive unified bloc) objects, such as
+                tuples ``(circuit, observables)`` or ``(circuit, observables, parameter_values)``.
+            precision: The target precision for expectation value estimates of each
+                run Estimator Pub that does not specify its own precision. If None
+                the estimator's default precision value will be used.
+
+        Returns:
+            Submitted job.
+
+        Raises:
+            ValueError: if precision value is not strictly greater than 0.
+        """
+    global estimator_service
+
+    try:
+        if estimator_service is None:
+            estimator_service = initialize_estimator()
+        job = estimator_service.run(pubs, precision)
+        
+        return f"Estimator job submitted: {job}"
+    except Exception as e:
+        logger.error(f"Failed run the estimator: {e}")
+        job_info = {"run": False, "error": str(e)}
+        return f"Error running the estimator: {job_info}"
 
 # Assisted by watsonx Code Assistant
