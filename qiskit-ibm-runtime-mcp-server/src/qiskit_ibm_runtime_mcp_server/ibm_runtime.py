@@ -17,9 +17,7 @@ import os
 from typing import Any, Dict, Optional, Union
 
 from qiskit_ibm_runtime.accounts import ChannelType
-from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore[import-untyped]
-from qiskit_ibm_runtime import EstimatorV2
-from qiskit_ibm_runtime import SamplerV2
+from qiskit_ibm_runtime import QiskitRuntimeService, EstimatorV2, SamplerV2 # type: ignore[import-untyped]
 from qiskit.providers import BackendV2
 from qiskit_ibm_runtime.session import Session
 from qiskit_ibm_runtime.batch import Batch
