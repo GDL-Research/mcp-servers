@@ -14,12 +14,17 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from qiskit_ibm_runtime.accounts import ChannelType
 from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore[import-untyped]
 from qiskit_ibm_runtime import EstimatorV2
-
+from qiskit_ibm_runtime import SamplerV2
+from qiskit.providers import BackendV2
+from qiskit_ibm_runtime.session import Session
+from qiskit_ibm_runtime.batch import Batch
+from qiskit_ibm_runtime.options.estimator_options import EstimatorOptions
+from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
 
 def least_busy(backends):
     """Find the least busy backend from a list of backends."""
@@ -57,7 +62,7 @@ logger = logging.getLogger(__name__)
 # Global service instances
 service: Optional[QiskitRuntimeService] = None
 estimator_service: Optional[EstimatorV2] = None
-
+sampler_service: Optional[SamplerV2] = None
 
 def initialize_service(
     token: Optional[str] = None, channel: str = "ibm_quantum_platform"
@@ -124,17 +129,49 @@ def initialize_service(
         raise
 
 def initialize_estimator(
-    mode = None,
-    options = None
+        mode: Optional[Union[BackendV2, Session, Batch, str]] = None,
+        options: Optional[Union[Dict, EstimatorOptions]] = None,
 ) -> EstimatorV2:
     """Initialize the EstimatorV2 instance.
 
-    This helper creates an :class:`qiskit_ibm_runtime.EstimatorV2` that
-    interacts with Qiskit Runtime Estimator primitive service.
-        Qiskit Runtime Estimator primitive service estimates expectation values of quantum circuits and
-        observables.
+        This helper creates an :class:`qiskit_ibm_runtime.EstimatorV2` that
+        interacts with Qiskit Runtime Estimator primitive service.
+            Qiskit Runtime Estimator primitive service estimates expectation values of quantum circuits and
+            observables.
 
-    Args:
+        Args:
+            mode: The execution mode used to make the primitive query. It can be:
+
+                * A :class:`Backend` if you are using job mode.
+                * A :class:`Session` if you are using session execution mode.
+                * A :class:`Batch` if you are using batch execution mode.
+
+                Refer to the
+                `Qiskit Runtime documentation
+                <https://quantum.cloud.ibm.com/docs/guides/execution-modes>`_
+                for more information about the ``Execution modes``.
+            options: Estimator options, see :class:`EstimatorOptions` for detailed description.
+
+        Returns:
+            EstimatorV2: The initialized estimator.
+    """
+    global estimator_service
+    try:
+        # Create the estimator that talks to the quantum back‑ends.
+        estimator_service = EstimatorV2(mode, options)
+        logger.info("Successfully initialized EstimatorV2.")
+        return estimator_service
+    except Exception as e:
+        logger.error(f"Failed to initialize EstimatorV2: {e}")
+        raise
+
+def initialize_sampler(
+        mode: Optional[Union[BackendV2, Session, Batch]] = None,
+        options: Optional[Union[Dict, SamplerOptions]] = None,
+) -> SamplerV2:
+    """Initializes the Sampler primitive.
+
+        Args:
             mode: The execution mode used to make the primitive query. It can be:
 
                 * A :class:`Backend` if you are using job mode.
@@ -146,19 +183,19 @@ def initialize_estimator(
                 <https://quantum.cloud.ibm.com/docs/guides/execution-modes>`_
                 for more information about the ``Execution modes``.
 
-            options: Estimator options, see :class:`EstimatorOptions` for detailed description.
+            options: Sampler options, see :class:`SamplerOptions` for detailed description.
 
     Returns:
-        EstimatorV2: The initialized estimator.
+        SamplerV2: The initialized sampler.
     """
-    global estimator_service
+    global sampler_service
     try:
         # Create the estimator that talks to the quantum back‑ends.
-        estimator_service = EstimatorV2(mode=mode, options=options)
-        logger.info("Successfully initialized EstimatorV2.")
-        return estimator_service
+        sampler_service = SamplerV2(mode, options)
+        logger.info("Successfully initialized SamplerV2.")
+        return sampler_service
     except Exception as e:
-        logger.error(f"Failed to initialize EstimatorV2: {e}")
+        logger.error(f"Failed to initialize SamplerV2: {e}")
         raise
 
 async def setup_ibm_quantum_account(
@@ -627,7 +664,7 @@ async def usage_info() -> str:
         usage_info = {"collect": False, "error": str(e)}
         return f"Error collecting usage information: {usage_info}"
 
-async def estimator_run(pubs = None, precision = None) -> str:
+async def estimator_run(estimator_mode: Optional[Union[BackendV2, Session, Batch]] = None, estimator_options: Optional[Union[Dict, EstimatorOptions]] = None, pubs = None, precision = None) -> str:
     """Submit a request to the estimator primitive.
 
         Args:
@@ -647,13 +684,44 @@ async def estimator_run(pubs = None, precision = None) -> str:
 
     try:
         if estimator_service is None:
-            estimator_service = initialize_estimator()
-        job = estimator_service.run(pubs, precision)
+            estimator_service = initialize_estimator(estimator_mode, estimator_options)
+        estimator_job = estimator_service.run(pubs, precision)
         
-        return f"Estimator job submitted: {job}"
+        return f"Estimator job submitted: {estimator_job}"
     except Exception as e:
         logger.error(f"Failed run the estimator: {e}")
-        job_info = {"run": False, "error": str(e)}
-        return f"Error running the estimator: {job_info}"
+        estimator_job_info = {"run": False, "error": str(e)}
+        return f"Error running the estimator: {estimator_job_info}"
+
+async def sampler_run(sampler_mode: Optional[Union[BackendV2, Session, Batch]] = None, sampler_options: Optional[Union[Dict, SamplerOptions]] = None, pubs = None, precision = None) -> str:
+    """Submit a request to the sampler primitive.
+
+        Args:
+            pubs: An iterable of pub-like objects. For example, a list of circuits
+                  or tuples ``(circuit, parameter_values)``.
+            shots: The total number of shots to sample for each sampler pub that does
+                   not specify its own shots. If ``None``, the primitive's default
+                   shots value will be used, which can vary by implementation.
+
+        Returns:
+            Submitted job.
+            The result of the job is an instance of
+            :class:`qiskit.primitives.containers.PrimitiveResult`.
+
+        Raises:
+            ValueError: Invalid arguments are given.
+        """
+    global sampler_service
+
+    try:
+        if sampler_service is None:
+            sampler_service = initialize_sampler(sampler_mode, sampler_options)
+        sampler_job = sampler_service.run(pubs, precision)
+        
+        return f"Estimator job submitted: {sampler_job}"
+    except Exception as e:
+        logger.error(f"Failed run the estimator: {e}")
+        sampler_job_info = {"run": False, "error": str(e)}
+        return f"Error running the estimator: {sampler_job_info}"
 
 # Assisted by watsonx Code Assistant
