@@ -13,7 +13,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -34,7 +34,7 @@ def _get_token_from_system():
                 "More info about saving your token using QiskitRuntimeService https://quantum.cloud.ibm.com/docs/en/api/qiskit-ibm-runtime/qiskit-runtime-service"
             )
 
-        with open(qiskit_file, "r") as _sc:
+        with open(qiskit_file) as _sc:
             creds = json.loads(_sc.read())
 
         token = creds.get("default-ibm-quantum-platform", {}).get("token")
@@ -50,7 +50,7 @@ def _get_token_from_system():
 QISKIT_IBM_TOKEN = _get_token_from_system()
 
 # Shared async client for better performance
-_client: Optional[httpx.AsyncClient] = None
+_client: httpx.AsyncClient | None = None
 
 
 def get_http_client() -> httpx.AsyncClient:
@@ -98,17 +98,15 @@ def get_error_message(response: httpx.Response) -> str:
 async def make_qca_request(
     url: str,
     method: str,
-    params: Optional[Dict[str, str]] = None,
-    body: Optional[Dict[str, Any]] = None,
+    params: dict[str, str] | None = None,
+    body: dict[str, Any] | None = None,
     max_retries: int = 3,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Make an async request to the Qiskit Code Assistant with proper error handling and retry logic."""
     import asyncio
 
     client = get_http_client()
-    last_exception: Optional[
-        Union[httpx.TimeoutException, httpx.ConnectError, Exception]
-    ] = None
+    last_exception: httpx.TimeoutException | httpx.ConnectError | Exception | None = None
     response = None
 
     for attempt in range(max_retries):
@@ -143,9 +141,7 @@ async def make_qca_request(
     if response is not None:
         return {"error": get_error_message(response)}
     else:
-        return {
-            "error": f"Request failed after {max_retries} attempts: {str(last_exception)}"
-        }
+        return {"error": f"Request failed after {max_retries} attempts: {last_exception!s}"}
 
 
 # Assisted by watsonx Code Assistant

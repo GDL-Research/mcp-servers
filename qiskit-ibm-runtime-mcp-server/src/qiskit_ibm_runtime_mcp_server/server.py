@@ -30,15 +30,16 @@ import logging
 from fastmcp import FastMCP
 
 from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
-    setup_ibm_quantum_account,
-    list_backends,
-    least_busy_backend,
-    get_backend_properties,
-    list_my_jobs,
-    get_job_status,
     cancel_job,
+    get_backend_properties,
+    get_job_status,
     get_service_status,
+    least_busy_backend,
+    list_backends,
+    list_my_jobs,
+    setup_ibm_quantum_account,
 )
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -50,9 +51,7 @@ mcp = FastMCP("Qiskit IBM Runtime")
 
 # Tools
 @mcp.tool()
-async def setup_ibm_quantum_account_tool(
-    token: str = "", channel: str = "ibm_quantum_platform"
-):
+async def setup_ibm_quantum_account_tool(token: str = "", channel: str = "ibm_quantum_platform"):
     """Set up IBM Quantum account with credentials.
 
     If token is not provided, will attempt to use IBM_QUANTUM_TOKEN environment variable

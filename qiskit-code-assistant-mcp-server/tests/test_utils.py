@@ -12,17 +12,18 @@
 
 """Unit tests for utility functions."""
 
-import pytest
-from unittest.mock import patch, Mock
-import httpx
-import respx
 import os
+from unittest.mock import Mock, patch
+
+import httpx
+import pytest
+import respx
 
 from qiskit_code_assistant_mcp_server.utils import (
-    make_qca_request,
+    close_http_client,
     get_error_message,
     get_http_client,
-    close_http_client,
+    make_qca_request,
 )
 
 
@@ -238,9 +239,7 @@ class TestMakeQCARequest:
             result = await make_qca_request("https://test-api.example.com/test", "GET")
 
             assert "error" in result
-            assert (
-                "Not found" in result["error"] or "Unable to fetch" in result["error"]
-            )
+            assert "Not found" in result["error"] or "Unable to fetch" in result["error"]
 
             # Clean up
             await close_http_client()
