@@ -65,39 +65,83 @@ Alternatively, you can create releases manually through the GitHub web interface
 
 ### Publishing via GitHub Releases
 
-The workflow automatically publishes when you create a GitHub release:
+The workflow automatically publishes when you create a GitHub release. The tag name determines which package is published.
 
-#### For Code Assistant Server:
+#### Tag Naming Convention
+
+| Tag Pattern | Package Published |
+|-------------|-------------------|
+| `code-assistant-v*` | qiskit-code-assistant-mcp-server |
+| `runtime-v*` | qiskit-ibm-runtime-mcp-server |
+| `meta-v*` | qiskit-mcp-servers (meta-package) |
+
+#### Complete Release Workflow
+
+Follow these steps to release a package:
+
+##### Step 1: Update Version
+
+Edit the version in the appropriate `pyproject.toml`:
+- **Code Assistant**: `qiskit-code-assistant-mcp-server/pyproject.toml`
+- **Runtime**: `qiskit-ibm-runtime-mcp-server/pyproject.toml`
+- **Meta-package**: `pyproject.toml` (root)
+
+##### Step 2: Commit and Push Changes
+
 ```bash
-# Update version in qiskit-code-assistant-mcp-server/pyproject.toml
-# Then create and push a tag
+# Stage and commit the version change
+git add -A
+git commit -m "Bump qiskit-code-assistant-mcp-server to v0.1.1"
+
+# Push to main branch
+git push origin main
+```
+
+##### Step 3: Create and Push Tag
+
+```bash
+# Create an annotated tag
 git tag -a code-assistant-v0.1.1 -m "Release qiskit-code-assistant-mcp-server v0.1.1"
+
+# Push the tag to GitHub
 git push origin code-assistant-v0.1.1
-
-# Create a GitHub release from this tag
-gh release create code-assistant-v0.1.1 --title "qiskit-code-assistant-mcp-server v0.1.1" --notes "Release notes here"
 ```
 
-#### For Runtime Server:
-```bash
-# Update version in qiskit-ibm-runtime-mcp-server/pyproject.toml
-# Then create and push a tag
-git tag -a runtime-v0.1.1 -m "Release qiskit-ibm-runtime-mcp-server v0.1.1"
-git push origin runtime-v0.1.1
+##### Step 4: Create GitHub Release
 
-# Create a GitHub release from this tag
-gh release create runtime-v0.1.1 --title "qiskit-ibm-runtime-mcp-server v0.1.1" --notes "Release notes here"
+```bash
+# Create the release (this triggers the publish workflow)
+gh release create code-assistant-v0.1.1 \
+  --title "qiskit-code-assistant-mcp-server v0.1.1" \
+  --generate-notes
 ```
 
-#### For Meta-Package:
-```bash
-# Update version in pyproject.toml (root)
-# Then create and push a tag
-git tag -a meta-v0.1.1 -m "Release qiskit-mcp-servers v0.1.1"
-git push origin meta-v0.1.1
+Or use `--notes "Your release notes here"` instead of `--generate-notes` for custom notes.
 
-# Create a GitHub release from this tag
-gh release create meta-v0.1.1 --title "qiskit-mcp-servers v0.1.1" --notes "Release notes here"
+#### Quick Reference Examples
+
+**Code Assistant Server:**
+```bash
+# After updating version in qiskit-code-assistant-mcp-server/pyproject.toml
+git add -A && git commit -m "Bump code-assistant to v0.1.1" && git push origin main
+git tag -a code-assistant-v0.1.1 -m "Release v0.1.1" && git push origin code-assistant-v0.1.1
+gh release create code-assistant-v0.1.1 --title "qiskit-code-assistant-mcp-server v0.1.1" --generate-notes
+```
+
+**Runtime Server:**
+```bash
+# After updating version in qiskit-ibm-runtime-mcp-server/pyproject.toml
+git add -A && git commit -m "Bump runtime to v0.1.1" && git push origin main
+git tag -a runtime-v0.1.1 -m "Release v0.1.1" && git push origin runtime-v0.1.1
+gh release create runtime-v0.1.1 --title "qiskit-ibm-runtime-mcp-server v0.1.1" --generate-notes
+```
+
+**Meta-Package:**
+```bash
+# After updating version in pyproject.toml (root)
+git add -A && git commit -m "Bump meta-package to v0.1.1" && git push origin main
+git tag -a meta-v0.1.1 -m "Release v0.1.1" && git push origin meta-v0.1.1
+gh release create meta-v0.1.1 --title "qiskit-mcp-servers v0.1.1" --generate-notes
 ```
 
 ### Manual Workflow Trigger
