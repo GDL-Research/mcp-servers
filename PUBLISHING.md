@@ -58,7 +58,7 @@ Alternatively, you can create releases manually through the GitHub web interface
 
 2. Add a "trusted publisher" with these settings:
    - **PyPI Project Name**: `qiskit-code-assistant-mcp-server` (or `qiskit-ibm-runtime-mcp-server` or `qiskit-mcp-servers`)
-   - **Owner**: `Qiskit`
+   - **Owner**: `AI4quantum`
    - **Repository**: `mcp-servers`
    - **Workflow name**: `publish-pypi.yml`
    - **Environment name**: (leave blank)
