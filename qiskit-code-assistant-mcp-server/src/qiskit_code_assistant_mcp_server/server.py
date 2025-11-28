@@ -66,9 +66,7 @@ else:
 
 mcp.resource("qca://models", mime_type="application/json")(qca_list_models)
 mcp.resource("qca://model/{model_id}", mime_type="application/json")(qca_get_model)
-mcp.resource("qca://disclaimer/{model_id}", mime_type="application/json")(
-    qca_get_model_disclaimer
-)
+mcp.resource("qca://disclaimer/{model_id}", mime_type="application/json")(qca_get_model_disclaimer)
 mcp.resource("qca://status", mime_type="text/plain")(qca_get_service_status)
 
 

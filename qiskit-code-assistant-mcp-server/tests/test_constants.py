@@ -53,9 +53,7 @@ class TestValidateConfiguration:
             "qiskit_code_assistant_mcp_server.constants.QCA_TOOL_API_BASE",
             "https://valid-api.example.com",
         ):
-            with patch(
-                "qiskit_code_assistant_mcp_server.constants.QCA_TOOL_MODEL_NAME", ""
-            ):
+            with patch("qiskit_code_assistant_mcp_server.constants.QCA_TOOL_MODEL_NAME", ""):
                 result = validate_configuration()
                 assert result is False
 
@@ -161,9 +159,7 @@ class TestEnvironmentVariableHandling:
                 constants_module.QCA_TOOL_API_BASE
                 == "https://qiskit-code-assistant.quantum.ibm.com"
             )
-            assert (
-                constants_module.QCA_TOOL_MODEL_NAME == "mistral-small-3.2-24b-qiskit"
-            )
+            assert constants_module.QCA_TOOL_MODEL_NAME == "mistral-small-3.2-24b-qiskit"
             assert constants_module.QCA_REQUEST_TIMEOUT == 30.0
             assert constants_module.QCA_MCP_DEBUG_LEVEL == "INFO"
 
@@ -181,10 +177,7 @@ class TestVersionHandling:
 
             importlib.reload(constants_module)
 
-            assert (
-                "qiskit-code-assistant-mcp-server/1.2.3"
-                in constants_module.QCA_TOOL_X_CALLER
-            )
+            assert "qiskit-code-assistant-mcp-server/1.2.3" in constants_module.QCA_TOOL_X_CALLER
 
     def test_version_detection_failure(self):
         """Test version detection failure (should use unknown)."""
@@ -196,10 +189,7 @@ class TestVersionHandling:
 
             importlib.reload(constants_module)
 
-            assert (
-                "qiskit-code-assistant-mcp-server/unknown"
-                in constants_module.QCA_TOOL_X_CALLER
-            )
+            assert "qiskit-code-assistant-mcp-server/unknown" in constants_module.QCA_TOOL_X_CALLER
 
 
 # Assisted by watsonx Code Assistant

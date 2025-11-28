@@ -24,9 +24,7 @@ def least_busy(backends):
     if not backends:
         return None
 
-    operational_backends = [
-        b for b in backends if hasattr(b, "status") and b.status().operational
-    ]
+    operational_backends = [b for b in backends if hasattr(b, "status") and b.status().operational]
     if not operational_backends:
         return None
 
@@ -107,9 +105,7 @@ def initialize_service(
             # Initialize service with the new token
             try:
                 service = QiskitRuntimeService(channel=channel)
-                logger.info(
-                    f"Successfully initialized IBM Runtime service on channel: {channel}"
-                )
+                logger.info(f"Successfully initialized IBM Runtime service on channel: {channel}")
                 return service
             except Exception as e:
                 logger.error(f"Failed to initialize IBM Runtime service: {e}")
@@ -347,9 +343,7 @@ async def list_my_jobs(limit: int = 10) -> Dict[str, Any]:
                     "creation_date": getattr(job, "creation_date", "Unknown"),
                     "backend": job.backend().name if job.backend() else "Unknown",
                     "tags": getattr(job, "tags", []),
-                    "error_message": job.error_message()
-                    if hasattr(job, "error_message")
-                    else None,
+                    "error_message": job.error_message() if hasattr(job, "error_message") else None,
                 }
                 job_list.append(job_info)
             except Exception as je:
@@ -391,9 +385,7 @@ async def get_job_status(job_id: str) -> Dict[str, Any]:
             "creation_date": getattr(job, "creation_date", "Unknown"),
             "backend": job.backend().name if job.backend() else "Unknown",
             "tags": getattr(job, "tags", []),
-            "error_message": job.error_message()
-            if hasattr(job, "error_message")
-            else None,
+            "error_message": job.error_message() if hasattr(job, "error_message") else None,
         }
 
         return job_info

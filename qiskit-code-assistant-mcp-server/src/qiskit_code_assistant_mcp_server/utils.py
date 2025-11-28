@@ -106,9 +106,7 @@ async def make_qca_request(
     import asyncio
 
     client = get_http_client()
-    last_exception: Optional[
-        Union[httpx.TimeoutException, httpx.ConnectError, Exception]
-    ] = None
+    last_exception: Optional[Union[httpx.TimeoutException, httpx.ConnectError, Exception]] = None
     response = None
 
     for attempt in range(max_retries):
@@ -143,9 +141,7 @@ async def make_qca_request(
     if response is not None:
         return {"error": get_error_message(response)}
     else:
-        return {
-            "error": f"Request failed after {max_retries} attempts: {str(last_exception)}"
-        }
+        return {"error": f"Request failed after {max_retries} attempts: {str(last_exception)}"}
 
 
 # Assisted by watsonx Code Assistant

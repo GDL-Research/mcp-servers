@@ -123,9 +123,7 @@ class TestToolHandlers:
         """Test qca_accept_model_disclaimer tool."""
         from qiskit_code_assistant_mcp_server.qca import qca_accept_model_disclaimer
 
-        result = await qca_accept_model_disclaimer(
-            "mistral-small-3.2-24b-qiskit", "disclaimer_123"
-        )
+        result = await qca_accept_model_disclaimer("mistral-small-3.2-24b-qiskit", "disclaimer_123")
 
         assert result["status"] == "success"
         assert "result" in result
@@ -157,10 +155,7 @@ class TestErrorHandling:
             result = await qca_list_models()
 
             assert result["status"] == "error"
-            assert (
-                "timeout" in result["message"].lower()
-                or "failed" in result["message"].lower()
-            )
+            assert "timeout" in result["message"].lower() or "failed" in result["message"].lower()
 
     @pytest.mark.asyncio
     async def test_authentication_error_handling(self, mock_env_vars):
@@ -181,9 +176,7 @@ class TestErrorHandling:
         """Test handling of server errors."""
         with respx.mock() as respx_mock:
             respx_mock.post(f"{QCA_TOOL_API_BASE}/v1/completions").mock(
-                return_value=httpx.Response(
-                    500, json={"detail": "Internal server error"}
-                )
+                return_value=httpx.Response(500, json={"detail": "Internal server error"})
             )
 
             from qiskit_code_assistant_mcp_server.qca import qca_get_completion
@@ -227,9 +220,7 @@ class TestEndToEndScenarios:
         )
 
         # 1. Get disclaimer
-        disclaimer_result = await qca_get_model_disclaimer(
-            "mistral-small-3.2-24b-qiskit"
-        )
+        disclaimer_result = await qca_get_model_disclaimer("mistral-small-3.2-24b-qiskit")
         assert disclaimer_result["status"] == "success"
         disclaimer_id = disclaimer_result["disclaimer"]["id"]
 

@@ -50,9 +50,7 @@ mcp = FastMCP("Qiskit IBM Runtime")
 
 # Tools
 @mcp.tool()
-async def setup_ibm_quantum_account_tool(
-    token: str = "", channel: str = "ibm_quantum_platform"
-):
+async def setup_ibm_quantum_account_tool(token: str = "", channel: str = "ibm_quantum_platform"):
     """Set up IBM Quantum account with credentials.
 
     If token is not provided, will attempt to use IBM_QUANTUM_TOKEN environment variable

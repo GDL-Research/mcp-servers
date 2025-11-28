@@ -100,9 +100,7 @@ async def qca_get_model_disclaimer(model_id: str) -> Dict[str, Any]:
         }
 
 
-async def qca_accept_model_disclaimer(
-    model_id: str, disclaimer_id: str
-) -> Dict[str, Any]:
+async def qca_accept_model_disclaimer(model_id: str, disclaimer_id: str) -> Dict[str, Any]:
     """
     Accept the disclaimer for an available model from the Qiskit Code Assistant.
 

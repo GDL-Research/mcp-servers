@@ -238,9 +238,7 @@ class TestMakeQCARequest:
             result = await make_qca_request("https://test-api.example.com/test", "GET")
 
             assert "error" in result
-            assert (
-                "Not found" in result["error"] or "Unable to fetch" in result["error"]
-            )
+            assert "Not found" in result["error"] or "Unable to fetch" in result["error"]
 
             # Clean up
             await close_http_client()

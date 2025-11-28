@@ -29,15 +29,11 @@ class TestMCPServerIntegration:
         assert mcp.name == "Qiskit IBM Runtime"
 
     @pytest.mark.asyncio
-    async def test_service_initialization_flow(
-        self, mock_env_vars, mock_runtime_service
-    ):
+    async def test_service_initialization_flow(self, mock_env_vars, mock_runtime_service):
         """Test service initialization flow."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import initialize_service
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService"
-        ) as mock_qrs:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService") as mock_qrs:
             mock_qrs.return_value = mock_runtime_service
 
             service = initialize_service()
@@ -49,18 +45,14 @@ class TestToolIntegration:
     """Test MCP tool integration."""
 
     @pytest.mark.asyncio
-    async def test_setup_and_list_backends_workflow(
-        self, mock_env_vars, mock_runtime_service
-    ):
+    async def test_setup_and_list_backends_workflow(self, mock_env_vars, mock_runtime_service):
         """Test setup account -> list backends workflow."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
             setup_ibm_quantum_account,
             list_backends,
         )
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
             mock_init.return_value = mock_runtime_service
 
             # 1. Setup account
@@ -81,12 +73,8 @@ class TestToolIntegration:
             get_backend_properties,
         )
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
-            with patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy"
-            ) as mock_least_busy:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+            with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy") as mock_least_busy:
                 mock_init.return_value = mock_runtime_service
 
                 # Mock least busy backend
@@ -120,9 +108,7 @@ class TestToolIntegration:
             cancel_job,
         )
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service
-        ):
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service):
             # 1. List jobs
             jobs_result = await list_my_jobs(5)
             assert jobs_result["status"] == "success"
@@ -147,9 +133,7 @@ class TestResourceIntegration:
         """Test ibm_quantum://status resource."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import get_service_status
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
             mock_init.return_value = mock_runtime_service
 
             result = await get_service_status()
@@ -167,9 +151,7 @@ class TestErrorHandlingIntegration:
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import setup_ibm_quantum_account
 
         # First call fails with authentication error
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
             mock_init.side_effect = [
                 ValueError("Invalid token"),
                 Mock(),  # Second call succeeds
@@ -192,9 +174,7 @@ class TestErrorHandlingIntegration:
         """Test handling when quantum service is unavailable."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import list_backends
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
             mock_init.side_effect = Exception("Service unavailable")
 
             result = await list_backends()
@@ -203,15 +183,11 @@ class TestErrorHandlingIntegration:
             assert "Failed to list backends" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_network_connectivity_issues(
-        self, mock_env_vars, mock_runtime_service
-    ):
+    async def test_network_connectivity_issues(self, mock_env_vars, mock_runtime_service):
         """Test handling of network connectivity issues."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import get_backend_properties
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
             mock_init.return_value = mock_runtime_service
             mock_runtime_service.backend.side_effect = Exception("Network timeout")
 
@@ -225,9 +201,7 @@ class TestEndToEndScenarios:
     """Test end-to-end scenarios."""
 
     @pytest.mark.asyncio
-    async def test_complete_backend_exploration(
-        self, mock_env_vars, mock_runtime_service
-    ):
+    async def test_complete_backend_exploration(self, mock_env_vars, mock_runtime_service):
         """Test complete backend exploration scenario."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
             setup_ibm_quantum_account,
@@ -237,12 +211,8 @@ class TestEndToEndScenarios:
             get_service_status,
         )
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
-            with patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy"
-            ) as mock_least_busy:
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+            with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy") as mock_least_busy:
                 mock_init.return_value = mock_runtime_service
 
                 # Mock least busy backend
@@ -271,9 +241,7 @@ class TestEndToEndScenarios:
                 assert least_busy_result["status"] == "success"
 
                 # 5. Get detailed properties of recommended backend
-                properties_result = await get_backend_properties(
-                    least_busy_result["backend_name"]
-                )
+                properties_result = await get_backend_properties(least_busy_result["backend_name"])
                 assert properties_result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -284,9 +252,7 @@ class TestEndToEndScenarios:
             get_job_status,
         )
 
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service
-        ):
+        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service):
             # 1. List recent jobs
             jobs_result = await list_my_jobs(10)
             assert jobs_result["status"] == "success"

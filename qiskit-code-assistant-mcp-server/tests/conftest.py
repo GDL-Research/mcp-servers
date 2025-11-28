@@ -84,9 +84,7 @@ def mock_http_responses():
         )
 
         # Mock model details endpoint
-        respx_mock.get(
-            f"{QCA_TOOL_API_BASE}/v1/model/mistral-small-3.2-24b-qiskit"
-        ).mock(
+        respx_mock.get(f"{QCA_TOOL_API_BASE}/v1/model/mistral-small-3.2-24b-qiskit").mock(
             return_value=httpx.Response(
                 200,
                 json={
@@ -146,9 +144,7 @@ def mock_http_error_responses():
     with respx.mock(assert_all_called=False) as respx_mock:
         # Mock 401 Unauthorized
         respx_mock.get(f"{QCA_TOOL_API_BASE}/v1/models").mock(
-            return_value=httpx.Response(
-                401, json={"detail": "Invalid authentication credentials"}
-            )
+            return_value=httpx.Response(401, json={"detail": "Invalid authentication credentials"})
         )
 
         # Mock 500 Server Error
