@@ -270,9 +270,7 @@ class TestModelSelection:
         from qiskit_code_assistant_mcp_server.constants import QCA_TOOL_MODEL_NAME
 
         # Mock qca_list_models to return models including the default
-        with patch(
-            "qiskit_code_assistant_mcp_server.qca.qca_list_models"
-        ) as mock_list_models:
+        with patch("qiskit_code_assistant_mcp_server.qca.qca_list_models") as mock_list_models:
             mock_list_models.return_value = {
                 "status": "success",
                 "models": [
@@ -290,9 +288,7 @@ class TestModelSelection:
         from qiskit_code_assistant_mcp_server.qca import _select_available_model
         from qiskit_code_assistant_mcp_server.constants import QCA_TOOL_MODEL_NAME
 
-        with patch(
-            "qiskit_code_assistant_mcp_server.qca.qca_list_models"
-        ) as mock_list_models:
+        with patch("qiskit_code_assistant_mcp_server.qca.qca_list_models") as mock_list_models:
             # Return models that don't include the default
             mock_list_models.return_value = {
                 "status": "success",
@@ -313,9 +309,7 @@ class TestModelSelection:
         from qiskit_code_assistant_mcp_server.qca import _select_available_model
         from qiskit_code_assistant_mcp_server.constants import QCA_TOOL_MODEL_NAME
 
-        with patch(
-            "qiskit_code_assistant_mcp_server.qca.qca_list_models"
-        ) as mock_list_models:
+        with patch("qiskit_code_assistant_mcp_server.qca.qca_list_models") as mock_list_models:
             mock_list_models.return_value = {"status": "success", "models": []}
 
             result = _select_available_model()
@@ -328,9 +322,7 @@ class TestModelSelection:
         from qiskit_code_assistant_mcp_server.qca import _select_available_model
         from qiskit_code_assistant_mcp_server.constants import QCA_TOOL_MODEL_NAME
 
-        with patch(
-            "qiskit_code_assistant_mcp_server.qca.qca_list_models"
-        ) as mock_list_models:
+        with patch("qiskit_code_assistant_mcp_server.qca.qca_list_models") as mock_list_models:
             mock_list_models.return_value = {
                 "status": "error",
                 "message": "Authentication failed",
@@ -346,9 +338,7 @@ class TestModelSelection:
         from qiskit_code_assistant_mcp_server.qca import _select_available_model
         from qiskit_code_assistant_mcp_server.constants import QCA_TOOL_MODEL_NAME
 
-        with patch(
-            "qiskit_code_assistant_mcp_server.qca.qca_list_models"
-        ) as mock_list_models:
+        with patch("qiskit_code_assistant_mcp_server.qca.qca_list_models") as mock_list_models:
             mock_list_models.side_effect = Exception("Network error")
 
             result = _select_available_model()
@@ -360,9 +350,7 @@ class TestModelSelection:
         """Test handling of models without IDs."""
         from qiskit_code_assistant_mcp_server.qca import _select_available_model
 
-        with patch(
-            "qiskit_code_assistant_mcp_server.qca.qca_list_models"
-        ) as mock_list_models:
+        with patch("qiskit_code_assistant_mcp_server.qca.qca_list_models") as mock_list_models:
             mock_list_models.return_value = {
                 "status": "success",
                 "models": [
