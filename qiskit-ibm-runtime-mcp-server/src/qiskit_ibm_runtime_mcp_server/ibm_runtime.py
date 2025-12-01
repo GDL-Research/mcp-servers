@@ -14,15 +14,12 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
-from qiskit_ibm_runtime.accounts import ChannelType
-from qiskit_ibm_runtime import QiskitRuntimeService, EstimatorV2, SamplerV2 # type: ignore[import-untyped]
-from qiskit.providers import BackendV2
-from qiskit_ibm_runtime.session import Session
-from qiskit_ibm_runtime.batch import Batch
-from qiskit_ibm_runtime.options.estimator_options import EstimatorOptions
-from qiskit_ibm_runtime.options.sampler_options import SamplerOptions
+from qiskit_ibm_runtime import QiskitRuntimeService, EstimatorV2 # type: ignore[import-untyped]
+from qiskit.circuit.library import real_amplitudes
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 def least_busy(backends):
     """Find the least busy backend from a list of backends."""
@@ -59,8 +56,6 @@ logger = logging.getLogger(__name__)
 
 # Global service instances
 service: Optional[QiskitRuntimeService] = None
-estimator_service: Optional[EstimatorV2] = None
-sampler_service: Optional[SamplerV2] = None
 
 def initialize_service(
     token: Optional[str] = None, channel: str = "ibm_quantum_platform"
@@ -126,10 +121,7 @@ def initialize_service(
             logger.error(f"Failed to initialize IBM Runtime service: {e}")
         raise
 
-def initialize_estimator(
-        mode: Optional[Union[BackendV2, Session, Batch, str]] = None,
-        options: Optional[Union[Dict, EstimatorOptions]] = None,
-) -> EstimatorV2:
+def initialize_estimator():
     """Initialize the EstimatorV2 instance.
 
         This helper creates an :class:`qiskit_ibm_runtime.EstimatorV2` that
@@ -154,46 +146,16 @@ def initialize_estimator(
             EstimatorV2: The initialized estimator.
     """
     global estimator_service
+    global service
+
     try:
-        # Create the estimator that talks to the quantum back‑ends.
-        estimator_service = EstimatorV2(mode, options)
-        logger.info("Successfully initialized EstimatorV2.")
-        return estimator_service
+        if service is None:
+            service = initialize_service()
+        backend = service.least_busy(operational=True, simulator=False)
+        estimator_service = EstimatorV2(mode=backend)
+        return estimator_service, backend
     except Exception as e:
         logger.error(f"Failed to initialize EstimatorV2: {e}")
-        raise
-
-def initialize_sampler(
-        mode: Optional[Union[BackendV2, Session, Batch]] = None,
-        options: Optional[Union[Dict, SamplerOptions]] = None,
-) -> SamplerV2:
-    """Initializes the Sampler primitive.
-
-        Args:
-            mode: The execution mode used to make the primitive query. It can be:
-
-                * A :class:`Backend` if you are using job mode.
-                * A :class:`Session` if you are using session execution mode.
-                * A :class:`Batch` if you are using batch execution mode.
-
-                Refer to the
-                `Qiskit Runtime documentation
-                <https://quantum.cloud.ibm.com/docs/guides/execution-modes>`_
-                for more information about the ``Execution modes``.
-
-            options: Sampler options, see :class:`SamplerOptions` for detailed description.
-
-    Returns:
-        SamplerV2: The initialized sampler.
-    """
-    global sampler_service
-    try:
-        # Create the estimator that talks to the quantum back‑ends.
-        sampler_service = SamplerV2(mode, options)
-        logger.info("Successfully initialized SamplerV2.")
-        return sampler_service
-    except Exception as e:
-        logger.error(f"Failed to initialize SamplerV2: {e}")
         raise
 
 async def setup_ibm_quantum_account(
@@ -541,13 +503,10 @@ async def get_service_status() -> str:
         status_info = {"connected": False, "error": str(e), "service": "IBM Quantum"}
         return f"IBM Quantum Service Status: {status_info}"
 
-async def delete_saved_account(filename: str = None, name: str = None, channel: ChannelType = None,) -> str:
+async def delete_saved_account(account_name: str = None) -> str:
     """Delete a saved account.
     Args:
-        filename: Name of file from which to delete the account.
-        name: Name of the saved account to delete.
-        channel: Channel type of the default account to delete.
-            Ignored if account name is provided.
+        account_name: Name of the saved account to delete.
 
     Returns:
     Information about if an account was deleted.
@@ -557,27 +516,23 @@ async def delete_saved_account(filename: str = None, name: str = None, channel: 
     try:
         if service is None:
             service = initialize_service()
-        service.delete_account(filename, name, channel)
+        is_deleted = service.delete_account(name= account_name)
 
-        delete_info = {
-            "deleted": True,
-            "channel": channel,
-            "name":name
-        }
-        return f"Account successfully deleted {delete_info}"
+        if is_deleted:
+            delete_info = {
+                "deleted": True
+            }
+            return f"Account successfully deleted: {delete_info}"
+        else:
+            return f"Failed to delete the account {account_name}, please validate the account name exists."
+
     except Exception as e:
         logger.error(f"Failed to delete account: {e}")
-        delete_info = {"deleted": False, "filename": filename, "name": name, "channel": channel, "error": str(e)}
+        delete_info = {"deleted": False, "error": str(e)}
         return f"Error deleting account: {delete_info}"
     
-async def list_saved_account(default: str = None, channel: ChannelType = None, filename: str = None, name: str = None) -> str:
+async def list_saved_account() -> str:
     """List the accounts saved on disk.
-    Args:
-        default: If set to True, only default accounts are returned.
-        channel: Channel type.``ibm_cloud`` or ``ibm_quantum_platform``.
-        filename: Name of file whose accounts are returned.
-        name: If set, only accounts with the given name are returned.
-
     Returns:
         List of all saved accounts.
     """
@@ -586,11 +541,15 @@ async def list_saved_account(default: str = None, channel: ChannelType = None, f
     try:
         if service is None:
             service = initialize_service()
-        accounts_list = service.saved_accounts(filename, name, channel)
-        return f"Account list: {accounts_list}"
+        accounts_list = service.saved_accounts()
+        if len(accounts_list) > 0:
+            return f"Account list: {accounts_list}"
+        else:
+            return "No accounts found"
+    
     except Exception as e:
         logger.error(f"Failed to collect accounts: {e}")
-        collect_info = {"collect": False, "filename": filename, "name": name, "channel": channel, "error": str(e)}
+        collect_info = {"collect": False, "error": str(e)}
         return f"Error collecting accounts: {collect_info}"
     
 async def active_account_info() -> str:
@@ -662,64 +621,50 @@ async def usage_info() -> str:
         usage_info = {"collect": False, "error": str(e)}
         return f"Error collecting usage information: {usage_info}"
 
-async def estimator_run(estimator_mode: Optional[Union[BackendV2, Session, Batch]] = None, estimator_options: Optional[Union[Dict, EstimatorOptions]] = None, pubs = None, precision = None) -> str:
+async def estimator_run(qubits, reps, sparse, theta) -> str:
     """Submit a request to the estimator primitive.
 
         Args:
-            pubs: An iterable of pub-like (primitive unified bloc) objects, such as
+            num_qubits: The number of qubits of the RealAmplitudes circuit.
+            reps: Specifies how often the structure of a rotation layer followed by an entanglement
+                layer is repeated.
+            sparse: Pauli list of terms.  
+                A list of Pauli strings or a Pauli string is also allowed
+            theta: An iterable of pub-like object as 
                 tuples ``(circuit, observables)`` or ``(circuit, observables, parameter_values)``.
-            precision: The target precision for expectation value estimates of each
-                run Estimator Pub that does not specify its own precision. If None
-                the estimator's default precision value will be used.
-
+        
         Returns:
-            Submitted job.
-
-        Raises:
-            ValueError: if precision value is not strictly greater than 0.
+            Submitted job information.
         """
-    global estimator_service
 
     try:
-        if estimator_service is None:
-            estimator_service = initialize_estimator(estimator_mode, estimator_options)
-        estimator_job = estimator_service.run(pubs, precision)
-        
-        return f"Estimator job submitted: {estimator_job}"
+        estimator_service, backend = initialize_estimator()
+        psi = real_amplitudes(num_qubits=qubits, reps=reps)
+        hamiltonian = SparsePauliOp.from_list(sparse)
+
+        pm = generate_preset_pass_manager(backend=backend, optimization_level=1)
+        isa_psi = pm.run(psi)
+        isa_observables = hamiltonian.apply_layout(isa_psi.layout)
+
+        job = estimator_service.run([(isa_psi, isa_observables, [theta])])
+        pub_result = job.result()[0]
+
+        job_info = {
+                    "job_id": job.job_id(),
+                    "status": job.status(),
+                    "creation_date": getattr(job, "creation_date", "Unknown"),
+                    "backend": job.backend().name if job.backend() else "Unknown",
+                    "tags": getattr(job, "tags", []),
+                    "error_message": job.error_message()
+                    if hasattr(job, "error_message")
+                    else None,
+                    "result": str(pub_result.data.evs)
+                }
+    
+        return f"Estimator job results: {job_info}"
     except Exception as e:
         logger.error(f"Failed run the estimator: {e}")
         estimator_job_info = {"run": False, "error": str(e)}
         return f"Error running the estimator: {estimator_job_info}"
-
-async def sampler_run(sampler_mode: Optional[Union[BackendV2, Session, Batch]] = None, sampler_options: Optional[Union[Dict, SamplerOptions]] = None, pubs = None, precision = None) -> str:
-    """Submit a request to the sampler primitive.
-
-        Args:
-            pubs: An iterable of pub-like objects. For example, a list of circuits
-                  or tuples ``(circuit, parameter_values)``.
-            shots: The total number of shots to sample for each sampler pub that does
-                   not specify its own shots. If ``None``, the primitive's default
-                   shots value will be used, which can vary by implementation.
-
-        Returns:
-            Submitted job.
-            The result of the job is an instance of
-            :class:`qiskit.primitives.containers.PrimitiveResult`.
-
-        Raises:
-            ValueError: Invalid arguments are given.
-        """
-    global sampler_service
-
-    try:
-        if sampler_service is None:
-            sampler_service = initialize_sampler(sampler_mode, sampler_options)
-        sampler_job = sampler_service.run(pubs, precision)
-        
-        return f"Estimator job submitted: {sampler_job}"
-    except Exception as e:
-        logger.error(f"Failed run the estimator: {e}")
-        sampler_job_info = {"run": False, "error": str(e)}
-        return f"Error running the estimator: {sampler_job_info}"
 
 # Assisted by watsonx Code Assistant

@@ -38,6 +38,13 @@ from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
     get_job_status,
     cancel_job,
     get_service_status,
+    delete_saved_account,
+    list_saved_account,
+    active_account_info,
+    active_instance_info,
+    available_instances,
+    usage_info,
+    estimator_run
 )
 
 # Configure logging
@@ -96,6 +103,40 @@ async def cancel_job_tool(job_id: str):
     """Cancel a specific job."""
     return await cancel_job(job_id)
 
+@mcp.tool()
+async def delete_saved_account_tool(account_name: str):
+    """Delete saved account."""
+    return await delete_saved_account(account_name)
+
+@mcp.tool()
+async def list_saved_account_tool():
+    """List saved account."""
+    return await list_saved_account()
+
+@mcp.tool()
+async def active_account_info_tool():
+    """List active account information."""
+    return await active_account_info()
+
+@mcp.tool()
+async def active_instance_info_tool():
+    """List active instance information."""
+    return await active_instance_info()
+
+@mcp.tool()
+async def available_instances_tool():
+    """List available instances."""
+    return await available_instances()
+
+@mcp.tool()
+async def usage_info_tool():
+    """List instance usage information."""
+    return await usage_info()
+
+@mcp.tool()
+async def estimator_run_tool(num_qubits:int=2, reps:int=2, sparse: list=[("II", 1), ("IZ", 2), ("XI", 3)], theta: list = [0, 1, 1, 2, 3, 5]):
+    """Run estimator."""
+    return await estimator_run(num_qubits, reps, sparse, theta)
 
 # Resources
 @mcp.resource("ibm://status", mime_type="text/plain")
