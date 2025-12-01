@@ -71,6 +71,7 @@ qiskit-code-assistant-mcp-server = "qiskit_code_assistant_mcp_server:main"
 dev = [
     "ruff>=0.11.13",
     "mypy>=1.15.0",
+    "bandit[toml]>=1.9.2",
 ]
 test = [
     "pytest>=7.4.0",

@@ -72,6 +72,7 @@ qiskit-ibm-runtime-mcp-server = "qiskit_ibm_runtime_mcp_server:main"
 dev = [
     "ruff>=0.11.13",
     "mypy>=1.15.0",
+    "bandit[toml]>=1.9.2",
 ]
 test = [
     "pytest>=7.4.0",
