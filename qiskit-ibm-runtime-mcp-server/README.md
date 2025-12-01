@@ -329,6 +329,7 @@ uv run pytest tests/test_server.py -v
 ### Test Structure
 
 - `tests/test_server.py` - Unit tests for server functions
+- `tests/test_sync.py` - Unit tests for synchronous execution
 - `tests/test_integration.py` - Integration tests
 - `tests/conftest.py` - Test fixtures and configuration
 
@@ -338,6 +339,7 @@ The test suite covers:
 - ✅ Service initialization and account setup
 - ✅ Backend listing and analysis
 - ✅ Job management and monitoring
+- ✅ Synchronous execution (`.sync` methods)
 - ✅ Error handling and validation
 - ✅ Integration scenarios
 - ✅ Resource and tool handlers

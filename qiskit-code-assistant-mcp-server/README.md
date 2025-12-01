@@ -177,8 +177,9 @@ uv run pytest tests/test_qca.py -v
 ### Test Structure
 
 - `tests/test_qca.py` - Unit tests for QCA functions
-- `tests/test_utils.py` - Unit tests for utility functions  
+- `tests/test_utils.py` - Unit tests for utility functions
 - `tests/test_constants.py` - Unit tests for configuration
+- `tests/test_sync.py` - Unit tests for synchronous execution
 - `tests/test_integration.py` - Integration tests
 - `tests/conftest.py` - Test fixtures and configuration
 
@@ -189,6 +190,7 @@ The test suite covers:
 - ✅ Model selection and availability guardrail
 - ✅ Error handling and validation
 - ✅ HTTP client management
+- ✅ Synchronous execution (`.sync` methods)
 - ✅ Configuration validation
 - ✅ Integration scenarios
 - ✅ Resource and tool handlers
