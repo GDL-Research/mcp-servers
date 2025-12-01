@@ -45,7 +45,20 @@ Comprehensive interface to IBM Quantum hardware via Qiskit IBM Runtime
 - **IBM Quantum account** and API token
 - **Qiskit Code Assistant access** (for code assistant server)
 
-### Installation & Usage
+### Installation
+
+#### Install from PyPI
+
+```bash
+# Install all MCP servers at once
+pip install qiskit-mcp-servers
+
+# Or install individual servers
+pip install qiskit-code-assistant-mcp-server
+pip install qiskit-ibm-runtime-mcp-server
+```
+
+#### Install from Source
 
 Each server is designed to run independently. Choose the server you need:
 
@@ -55,7 +68,7 @@ cd qiskit-code-assistant-mcp-server
 uv run qiskit-code-assistant-mcp-server
 ```
 
-#### ⚙️ IBM Runtime Server  
+#### ⚙️ IBM Runtime Server
 ```bash
 cd qiskit-ibm-runtime-mcp-server
 uv run qiskit-ibm-runtime-mcp-server
