@@ -31,14 +31,20 @@ from typing import Any
 from fastmcp import FastMCP
 
 from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
+    active_account_info,
+    active_instance_info,
+    available_instances,
     cancel_job,
+    delete_saved_account,
     get_backend_properties,
     get_job_status,
     get_service_status,
     least_busy_backend,
     list_backends,
     list_my_jobs,
+    list_saved_account,
     setup_ibm_quantum_account,
+    usage_info,
 )
 
 
@@ -97,6 +103,42 @@ async def get_job_status_tool(job_id: str) -> dict[str, Any]:
 async def cancel_job_tool(job_id: str) -> dict[str, Any]:
     """Cancel a specific job."""
     return await cancel_job(job_id)
+
+
+@mcp.tool()
+async def delete_saved_account_tool(account_name: str):
+    """Delete saved account."""
+    return await delete_saved_account(account_name)
+
+
+@mcp.tool()
+async def list_saved_account_tool():
+    """List saved account."""
+    return await list_saved_account()
+
+
+@mcp.tool()
+async def active_account_info_tool():
+    """List active account information."""
+    return await active_account_info()
+
+
+@mcp.tool()
+async def active_instance_info_tool():
+    """List active instance information."""
+    return await active_instance_info()
+
+
+@mcp.tool()
+async def available_instances_tool():
+    """List available instances."""
+    return await available_instances()
+
+
+@mcp.tool()
+async def usage_info_tool():
+    """List instance usage information."""
+    return await usage_info()
 
 
 # Resources

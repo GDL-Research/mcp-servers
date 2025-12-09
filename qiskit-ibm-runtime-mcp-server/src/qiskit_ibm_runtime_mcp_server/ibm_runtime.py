@@ -474,4 +474,130 @@ async def get_service_status() -> str:
         return f"IBM Quantum Service Status: {status_info}"
 
 
+@with_sync
+async def delete_saved_account(account_name: str = "") -> str:
+    """Delete a saved account.
+    Args:
+        account_name: Name of the saved account to delete.
+
+    Returns:
+    Information about if an account was deleted.
+    """
+    global service
+
+    try:
+        if service == "":
+            service = initialize_service()
+        is_deleted = service.delete_account(name=account_name)
+
+        if is_deleted:
+            delete_info = {"deleted": True}
+            return f"Account successfully deleted: {delete_info}"
+        else:
+            return f"Failed to delete the account {account_name}, please validate the account name exists."
+
+    except Exception as e:
+        logger.error(f"Failed to delete account: {e}")
+        delete_info = {"deleted": False, "error": str(e)}
+        return f"Error deleting account: {delete_info}"
+
+
+@with_sync
+async def list_saved_account() -> str:
+    """List the accounts saved on disk.
+    Returns:
+        List of all saved accounts.
+    """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        accounts_list = service.saved_accounts()
+        if len(accounts_list) > 0:
+            return f"Account list: {accounts_list}"
+        else:
+            return "No accounts found"
+    except Exception as e:
+        logger.error(f"Failed to collect accounts: {e}")
+        collect_info = {"collect": False, "error": str(e)}
+        return f"Error collecting accounts: {collect_info}"
+
+
+@with_sync
+async def active_account_info() -> str:
+    """
+    Return the IBM Quantum account currently in use for the session.
+        Returns:
+            A dictionary with information about the account currently in the session.
+    """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        active_account_info = service.active_account()
+        return f"Active account info: {active_account_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect active account: {e}")
+        active_account_info = {"collect": False, "error": str(e)}
+        return f"Error collecting active account: {active_account_info}"
+
+
+async def active_instance_info() -> str:
+    """Return the crn of the current active instance."""
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        active_instance_info = service.active_instance()
+        return f"Active instance crn: {active_instance_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect instance crn: {e}")
+        active_instance_info = {"collect": False, "error": str(e)}
+        return f"Error collecting active instance crn: {active_instance_info}"
+
+
+@with_sync
+async def available_instances() -> str:
+    """Return a list that contains a series of dictionaries with the
+        following instance identifiers per instance: "crn", "plan", "name".
+
+    Returns:
+        Instances available for the active account.
+    """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        available_instances_info = service.instances()
+        return f"Available instances for the active account: {available_instances_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect available instances for the active account: {e}")
+        available_instances_info = {"collect": False, "error": str(e)}
+        return f"Error collecting available instances for the active account: {available_instances_info}"
+
+
+@with_sync
+async def usage_info() -> str:
+    """Return usage information for the current active instance.
+
+    Returns:
+        Instance usage details.
+    """
+    global service
+
+    try:
+        if service is None:
+            service = initialize_service()
+        usage_info = service.usage()
+        return f"Usage information: {usage_info}"
+    except Exception as e:
+        logger.error(f"Failed to collect usage information: {e}")
+        usage_info = {"collect": False, "error": str(e)}
+        return f"Error collecting usage information: {usage_info}"
+
+
 # Assisted by watsonx Code Assistant
