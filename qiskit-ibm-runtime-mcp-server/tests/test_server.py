@@ -270,7 +270,7 @@ class TestLeastBusyBackend:
             result = await least_busy_backend()
 
             assert result["status"] == "error"
-            assert "No operational quantum backends available" in result["message"]
+            assert "No quantum backends available" in result["message"]
 
 
 class TestGetBackendProperties:

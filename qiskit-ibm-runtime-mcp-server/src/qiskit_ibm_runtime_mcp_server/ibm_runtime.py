@@ -26,11 +26,23 @@ def least_busy(backends: list[Any]) -> Any | None:
     if not backends:
         return None
 
-    operational_backends = [b for b in backends if hasattr(b, "status") and b.status().operational]
+    operational_backends = []
+    for b in backends:
+        try:
+            if hasattr(b, "status"):
+                status = b.status()
+                if status.operational:
+                    operational_backends.append((b, status.pending_jobs))
+        except Exception as e:
+            logger.warning(f"Skipping backend {getattr(b, 'name', 'unknown')} in least_busy: {e}")
+            continue
+
     if not operational_backends:
         return None
 
-    return min(operational_backends, key=lambda b: b.status().pending_jobs)
+    # Sort by pending jobs and return the backend with fewest pending jobs
+    operational_backends.sort(key=lambda x: x[1])
+    return operational_backends[0][0]
 
 
 def get_token_from_env() -> str | None:
@@ -187,36 +199,55 @@ async def list_backends() -> dict[str, Any]:
 
         backends = service.backends()
         backend_list = []
+        skipped_backends = []
 
         for backend in backends:
+            backend_name = getattr(backend, "name", "unknown")
             try:
-                status = backend.status()
-                backend_info = {
-                    "name": backend.name,
-                    "num_qubits": getattr(backend, "num_qubits", 0),
-                    "simulator": getattr(backend, "simulator", False),
-                    "operational": status.operational,
-                    "pending_jobs": status.pending_jobs,
-                    "status_msg": status.status_msg,
-                }
+                # Get basic info first (these shouldn't fail)
+                num_qubits = getattr(backend, "num_qubits", 0)
+                simulator = getattr(backend, "simulator", False)
+
+                # Try to get status (this is where API errors can occur)
+                try:
+                    status = backend.status()
+                    backend_info = {
+                        "name": backend_name,
+                        "num_qubits": num_qubits,
+                        "simulator": simulator,
+                        "operational": status.operational,
+                        "pending_jobs": status.pending_jobs,
+                        "status_msg": status.status_msg,
+                    }
+                except Exception as status_err:
+                    logger.warning(f"Failed to get status for backend {backend_name}: {status_err}")
+                    backend_info = {
+                        "name": backend_name,
+                        "num_qubits": num_qubits,
+                        "simulator": simulator,
+                        "operational": False,
+                        "pending_jobs": 0,
+                        "status_msg": "Status unavailable",
+                    }
+
                 backend_list.append(backend_info)
             except Exception as be:
-                logger.warning(f"Failed to get status for backend {backend.name}: {be}")
-                backend_info = {
-                    "name": backend.name,
-                    "num_qubits": getattr(backend, "num_qubits", 0),
-                    "simulator": getattr(backend, "simulator", False),
-                    "operational": False,
-                    "pending_jobs": 0,
-                    "status_msg": "Status unavailable",
-                }
-                backend_list.append(backend_info)
+                # If even getting basic backend info fails, skip it entirely
+                logger.warning(f"Skipping backend {backend_name} due to error: {be}")
+                skipped_backends.append(backend_name)
+                continue
 
-        return {
+        result = {
             "status": "success",
             "backends": backend_list,
             "total_backends": len(backend_list),
         }
+
+        if skipped_backends:
+            result["skipped_backends"] = skipped_backends
+            result["note"] = f"Some backends ({len(skipped_backends)}) were skipped due to API errors"
+
+        return result
 
     except Exception as e:
         logger.error(f"Failed to list backends: {e}")
@@ -237,30 +268,44 @@ async def least_busy_backend() -> dict[str, Any]:
         if service is None:
             service = initialize_service()
 
-        backends = service.backends(operational=True, simulator=False)
+        # Don't filter by operational=True here since that filter might trigger
+        # API calls for problematic backends. Let least_busy() handle the filtering.
+        backends = service.backends(simulator=False)
 
         if not backends:
             return {
                 "status": "error",
-                "message": "No operational quantum backends available",
+                "message": "No quantum backends available",
             }
 
         backend = least_busy(backends)
         if backend is None:
             return {
                 "status": "error",
-                "message": "Could not find a suitable backend",
+                "message": "Could not find a suitable operational backend. "
+                "All backends may be offline or under maintenance.",
             }
-        status = backend.status()
 
-        return {
-            "status": "success",
-            "backend_name": backend.name,
-            "num_qubits": getattr(backend, "num_qubits", 0),
-            "pending_jobs": status.pending_jobs,
-            "operational": status.operational,
-            "status_msg": status.status_msg,
-        }
+        try:
+            status = backend.status()
+            return {
+                "status": "success",
+                "backend_name": backend.name,
+                "num_qubits": getattr(backend, "num_qubits", 0),
+                "pending_jobs": status.pending_jobs,
+                "operational": status.operational,
+                "status_msg": status.status_msg,
+            }
+        except Exception as status_err:
+            logger.warning(f"Could not get final status for {backend.name}: {status_err}")
+            return {
+                "status": "success",
+                "backend_name": backend.name,
+                "num_qubits": getattr(backend, "num_qubits", 0),
+                "pending_jobs": 0,
+                "operational": True,
+                "status_msg": "Status refresh failed but backend was operational",
+            }
 
     except Exception as e:
         logger.error(f"Failed to find least busy backend: {e}")
@@ -351,9 +396,10 @@ async def get_backend_calibration(
         backend = service.backend(backend_name)
         num_qubits = getattr(backend, "num_qubits", 0)
 
-        # Get processor type and backend version from configuration
+        # Get processor type, backend version, and coupling map from configuration
         processor_type = None
         backend_version = None
+        coupling_map = []
         try:
             config = backend.configuration()
             processor_type = getattr(config, "processor_type", None)
@@ -361,8 +407,9 @@ async def get_backend_calibration(
             if isinstance(processor_type, dict):
                 family = processor_type.get("family", "")
                 revision = processor_type.get("revision", "")
-                processor_type = f"{family}" + (f" r{revision}" if revision else "")
+                processor_type = f"{family} r{revision}" if revision else family
             backend_version = getattr(config, "backend_version", None)
+            coupling_map = getattr(config, "coupling_map", []) or []
         except Exception:
             pass
 
@@ -508,22 +555,17 @@ async def get_backend_calibration(
                 # Get gate errors for two-qubit gates
                 elif gate in ["cx", "ecr", "cz"]:
                     # Get a few two-qubit gate errors from coupling map
-                    try:
-                        config = backend.configuration()
-                        coupling_map = getattr(config, "coupling_map", [])
-                        for edge in coupling_map[:5]:  # Limit to first 5 edges
-                            try:
-                                error = properties.gate_error(gate, edge)
-                                if error is not None:
-                                    gate_errors.append({
-                                        "gate": gate,
-                                        "qubits": edge,
-                                        "error": round(error, 6),
-                                    })
-                            except Exception:
-                                pass
-                    except Exception:
-                        pass
+                    for edge in coupling_map[:5]:  # Limit to first 5 edges
+                        try:
+                            error = properties.gate_error(gate, edge)
+                            if error is not None:
+                                gate_errors.append({
+                                    "gate": gate,
+                                    "qubits": edge,
+                                    "error": round(error, 6),
+                                })
+                        except Exception:
+                            pass
             except Exception:
                 pass
 
