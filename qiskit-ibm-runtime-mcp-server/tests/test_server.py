@@ -799,4 +799,5 @@ class TestGetBackendCalibration:
             qubit_1 = next(q for q in qubit_data if q["qubit"] == 1)
             assert qubit_1["operational"] is True
 
+
 # Assisted by watsonx Code Assistant
