@@ -87,6 +87,28 @@ logger = logging.getLogger(__name__)
 service: QiskitRuntimeService | None = None
 
 
+def _create_runtime_service(channel: str, instance: str | None) -> QiskitRuntimeService:
+    """
+    Create a QiskitRuntimeService instance with the given channel and optional instance.
+
+    Args:
+        channel: Service channel ('ibm_quantum_platform')
+        instance: IBM Quantum instance (CRN or service name), or None
+
+    Returns:
+        QiskitRuntimeService: New service instance
+    """
+    if instance:
+        logger.info(f"Initializing with instance: {instance}")
+        return QiskitRuntimeService(channel=channel, instance=instance)
+    else:
+        logger.info(
+            "No instance specified - service will search all instances (slower). "
+            "Set QISKIT_IBM_RUNTIME_MCP_INSTANCE for faster startup."
+        )
+        return QiskitRuntimeService(channel=channel)
+
+
 def initialize_service(
     token: str | None = None,
     channel: str = "ibm_quantum_platform",
@@ -118,15 +140,7 @@ def initialize_service(
         # First, try to initialize from saved credentials (unless a new token is explicitly provided)
         if not token:
             try:
-                if instance:
-                    logger.info(f"Initializing with instance: {instance}")
-                    service = QiskitRuntimeService(channel=channel, instance=instance)
-                else:
-                    logger.info(
-                        "No instance specified - service will search all instances (slower). "
-                        "Set QISKIT_IBM_RUNTIME_MCP_INSTANCE for faster startup."
-                    )
-                    service = QiskitRuntimeService(channel=channel)
+                service = _create_runtime_service(channel, instance)
                 logger.info(
                     f"Successfully initialized IBM Runtime service from saved credentials on channel: {channel}"
                 )
@@ -157,15 +171,7 @@ def initialize_service(
 
             # Initialize service with the new token
             try:
-                if instance:
-                    logger.info(f"Initializing with instance: {instance}")
-                    service = QiskitRuntimeService(channel=channel, instance=instance)
-                else:
-                    logger.info(
-                        "No instance specified - service will search all instances (slower). "
-                        "Set QISKIT_IBM_RUNTIME_MCP_INSTANCE for faster startup."
-                    )
-                    service = QiskitRuntimeService(channel=channel)
+                service = _create_runtime_service(channel, instance)
                 logger.info(f"Successfully initialized IBM Runtime service on channel: {channel}")
                 return service
             except Exception as e:
