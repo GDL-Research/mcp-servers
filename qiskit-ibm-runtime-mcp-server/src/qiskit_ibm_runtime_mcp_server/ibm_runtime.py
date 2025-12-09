@@ -442,9 +442,7 @@ def _get_gate_errors(
             with contextlib.suppress(Exception):
                 error = properties.gate_error(gate, [qubit])
                 if error is not None:
-                    gate_errors.append(
-                        {"gate": gate, "qubits": [qubit], "error": round(error, 6)}
-                    )
+                    gate_errors.append({"gate": gate, "qubits": [qubit], "error": round(error, 6)})
 
     # Two-qubit gates
     for gate in two_qubit_gates:
@@ -452,9 +450,7 @@ def _get_gate_errors(
             with contextlib.suppress(Exception):
                 error = properties.gate_error(gate, edge)
                 if error is not None:
-                    gate_errors.append(
-                        {"gate": gate, "qubits": edge, "error": round(error, 6)}
-                    )
+                    gate_errors.append({"gate": gate, "qubits": edge, "error": round(error, 6)})
 
     return gate_errors
 
@@ -528,9 +524,7 @@ async def get_backend_calibration(
             faulty_gates_raw = properties.faulty_gates()
             for gate in faulty_gates_raw:
                 with contextlib.suppress(Exception):
-                    faulty_gates.append(
-                        {"gate": gate.gate, "qubits": list(gate.qubits)}
-                    )
+                    faulty_gates.append({"gate": gate.gate, "qubits": list(gate.qubits)})
 
         # Determine which qubits to report on
         if qubit_indices is None:
@@ -542,9 +536,7 @@ async def get_backend_calibration(
         qubit_data: list[dict[str, Any]] = []
         for qubit in qubit_indices:
             try:
-                qubit_data.append(
-                    _get_qubit_calibration_data(properties, qubit, faulty_qubits)
-                )
+                qubit_data.append(_get_qubit_calibration_data(properties, qubit, faulty_qubits))
             except Exception as qe:
                 logger.warning(f"Failed to get calibration for qubit {qubit}: {qe}")
                 qubit_data.append({"qubit": qubit, "error": str(qe)})
