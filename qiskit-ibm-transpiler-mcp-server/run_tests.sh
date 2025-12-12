@@ -17,6 +17,10 @@ echo "🔍 Running code linting..."
 uv run ruff check src tests
 uv run ruff format src tests
 
+echo ""
+echo "🛡️ Running Bandit security checks..."
+uv run bandit -r src -f json -o bandit_report.json
+
 # Run type checking
 echo ""
 echo "🔬 Running type checking..."
