@@ -53,9 +53,7 @@ def least_busy(backends: list[Any]) -> Any | None:
                 if status.operational:
                     operational_backends.append((b, status.pending_jobs))
         except Exception as e:
-            logger.warning(
-                f"Skipping backend {getattr(b, 'name', 'unknown')} in least_busy: {e}"
-            )
+            logger.warning(f"Skipping backend {getattr(b, 'name', 'unknown')} in least_busy: {e}")
             continue
 
     if not operational_backends:
@@ -174,9 +172,7 @@ def initialize_service(
             # Initialize service with the new token
             try:
                 service = _create_runtime_service(channel, instance)
-                logger.info(
-                    f"Successfully initialized IBM Runtime service on channel: {channel}"
-                )
+                logger.info(f"Successfully initialized IBM Runtime service on channel: {channel}")
                 return service
             except Exception as e:
                 logger.error(f"Failed to initialize IBM Runtime service: {e}")
@@ -274,9 +270,7 @@ async def list_backends() -> dict[str, Any]:
                     "status_msg": status.status_msg,
                 }
             except Exception as status_err:
-                logger.warning(
-                    f"Failed to get status for backend {backend_name}: {status_err}"
-                )
+                logger.warning(f"Failed to get status for backend {backend_name}: {status_err}")
                 backend_info = {
                     "name": backend_name,
                     "num_qubits": num_qubits,
@@ -342,9 +336,7 @@ async def least_busy_backend() -> dict[str, Any]:
                 "status_msg": status.status_msg,
             }
         except Exception as status_err:
-            logger.warning(
-                f"Could not get final status for {backend.name}: {status_err}"
-            )
+            logger.warning(f"Could not get final status for {backend.name}: {status_err}")
             return {
                 "status": "success",
                 "backend_name": backend.name,
@@ -496,9 +488,7 @@ def _get_gate_errors(
             with contextlib.suppress(Exception):
                 error = properties.gate_error(gate, [qubit])
                 if error is not None:
-                    gate_errors.append(
-                        {"gate": gate, "qubits": [qubit], "error": round(error, 6)}
-                    )
+                    gate_errors.append({"gate": gate, "qubits": [qubit], "error": round(error, 6)})
 
     # Two-qubit gates
     for gate in two_qubit_gates:
@@ -506,9 +496,7 @@ def _get_gate_errors(
             with contextlib.suppress(Exception):
                 error = properties.gate_error(gate, edge)
                 if error is not None:
-                    gate_errors.append(
-                        {"gate": gate, "qubits": edge, "error": round(error, 6)}
-                    )
+                    gate_errors.append({"gate": gate, "qubits": edge, "error": round(error, 6)})
 
     return gate_errors
 
@@ -571,9 +559,7 @@ async def get_backend_calibration(
             faulty_gates_raw = properties.faulty_gates()
             for gate in faulty_gates_raw:
                 with contextlib.suppress(Exception):
-                    faulty_gates.append(
-                        {"gate": gate.gate, "qubits": list(gate.qubits)}
-                    )
+                    faulty_gates.append({"gate": gate.gate, "qubits": list(gate.qubits)})
 
         # Determine which qubits to report on
         if qubit_indices is None:
@@ -585,9 +571,7 @@ async def get_backend_calibration(
         qubit_data: list[dict[str, Any]] = []
         for qubit in qubit_indices:
             try:
-                qubit_data.append(
-                    _get_qubit_calibration_data(properties, qubit, faulty_qubits)
-                )
+                qubit_data.append(_get_qubit_calibration_data(properties, qubit, faulty_qubits))
             except Exception as qe:
                 logger.warning(f"Failed to get calibration for qubit {qubit}: {qe}")
                 qubit_data.append({"qubit": qubit, "error": str(qe)})
@@ -695,9 +679,7 @@ async def get_job_status(job_id: str) -> dict[str, Any]:
             "creation_date": getattr(job, "creation_date", "Unknown"),
             "backend": job.backend().name if job.backend() else "Unknown",
             "tags": getattr(job, "tags", []),
-            "error_message": (
-                job.error_message() if hasattr(job, "error_message") else None
-            ),
+            "error_message": (job.error_message() if hasattr(job, "error_message") else None),
         }
 
         return job_info
@@ -946,9 +928,7 @@ async def available_instances() -> dict[str, Any]:
         }
         return instance_data
     except Exception as e:
-        logger.error(
-            f"Failed to collect available instances for the active account: {e}"
-        )
+        logger.error(f"Failed to collect available instances for the active account: {e}")
         return {"status": "error", "error": str(e)}
 
 
