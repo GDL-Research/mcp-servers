@@ -1,13 +1,46 @@
-from qiskit_ibm_transpiler_mcp_server.sync import (
-    ai_routing_sync,
-    ai_clifford_synthesis_sync,
-    ai_linear_function_synthesis_sync,
-    ai_pauli_network_synthesis_sync,
-    ai_permutation_synthesis_sync,
-    setup_ibm_quantum_account_sync,
+from qiskit_ibm_transpiler_mcp_server.qta import (
+    ai_routing,
+    ai_clifford_synthesis,
+    ai_linear_function_synthesis,
+    ai_permutation_synthesis,
+    ai_pauli_network_synthesis,
 )
-
+from qiskit_ibm_transpiler_mcp_server.utils import setup_ibm_quantum_account
 import pytest
+
+
+class TestWithSyncDecorator:
+    """Test that async functions have .sync attribute."""
+
+    def test_ai_routing_has_sync(self):
+        """Test ai_routing has .sync attribute."""
+        assert hasattr(ai_routing, "sync")
+        assert callable(ai_routing.sync)
+
+    def test_ai_clifford_synthesis_has_sync(self):
+        """Test ai_clifford_synthesis has .sync attribute."""
+        assert hasattr(ai_clifford_synthesis, "sync")
+        assert callable(ai_clifford_synthesis.sync)
+
+    def test_ai_linear_function_synthesis_has_sync(self):
+        """Test ai_linear_function_synthesis has .sync attribute."""
+        assert hasattr(ai_linear_function_synthesis, "sync")
+        assert callable(ai_linear_function_synthesis.sync)
+
+    def test_ai_permutation_synthesis_has_sync(self):
+        """Test ai_permutation_synthesis has .sync attribute."""
+        assert hasattr(ai_permutation_synthesis, "sync")
+        assert callable(ai_permutation_synthesis.sync)
+
+    def test_pauli_network_has_sync(self):
+        """Test pauli_network_synthesis has .sync attribute."""
+        assert hasattr(ai_pauli_network_synthesis, "sync")
+        assert callable(ai_pauli_network_synthesis.sync)
+
+    def test_setup_ibm_account_has_sync(self):
+        """Test setup_ibm_quantum_account has .sync attribute."""
+        assert hasattr(setup_ibm_quantum_account, "sync")
+        assert callable(setup_ibm_quantum_account.sync)
 
 
 class TestAIRoutingSync:
@@ -22,10 +55,10 @@ class TestAIRoutingSync:
             "optimized_circuit_qasm": "optimized_circuit_qasm",
         }
         mocker_run_sync = mocker.patch(
-            "qiskit_ibm_transpiler_mcp_server.sync._run_async",
+            "qiskit_ibm_transpiler_mcp_server.utils._run_async",
             return_value=mock_response,
         )
-        result = ai_routing_sync(
+        result = ai_routing.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -99,7 +132,7 @@ class TestAIRoutingSync:
         """
         Failed test AI routing sync tool with existing backend, quantum circuit and PassManager
         """
-        result = ai_routing_sync(
+        result = ai_routing.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -119,10 +152,10 @@ class TestAICliffordSync:
             "optimized_circuit_qasm": "optimized_circuit_qasm",
         }
         mocker_run_sync = mocker.patch(
-            "qiskit_ibm_transpiler_mcp_server.sync._run_async",
+            "qiskit_ibm_transpiler_mcp_server.utils._run_async",
             return_value=mock_response,
         )
-        result = ai_clifford_synthesis_sync(
+        result = ai_clifford_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -196,7 +229,7 @@ class TestAICliffordSync:
         """
         Failed test AI Clifford synthesis sync tool with existing backend, quantum circuit and PassManager.
         """
-        result = ai_clifford_synthesis_sync(
+        result = ai_clifford_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -218,10 +251,10 @@ class TestAILinearFunctionSync:
             "optimized_circuit_qasm": "optimized_circuit_qasm",
         }
         mocker_run_sync = mocker.patch(
-            "qiskit_ibm_transpiler_mcp_server.sync._run_async",
+            "qiskit_ibm_transpiler_mcp_server.utils._run_async",
             return_value=mock_response,
         )
-        result = ai_linear_function_synthesis_sync(
+        result = ai_linear_function_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -295,7 +328,7 @@ class TestAILinearFunctionSync:
         """
         Failed test AI Linear Function synthesis sync tool with existing backend, quantum circuit and PassManager
         """
-        result = ai_linear_function_synthesis_sync(
+        result = ai_linear_function_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -315,10 +348,10 @@ class TestAIPermutationSync:
             "optimized_circuit_qasm": "optimized_circuit_qasm",
         }
         mocker_run_sync = mocker.patch(
-            "qiskit_ibm_transpiler_mcp_server.sync._run_async",
+            "qiskit_ibm_transpiler_mcp_server.utils._run_async",
             return_value=mock_response,
         )
-        result = ai_permutation_synthesis_sync(
+        result = ai_permutation_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -392,7 +425,7 @@ class TestAIPermutationSync:
         """
         Failed test AI Permutation synthesis sync tool with existing backend, quantum circuit and PassManager
         """
-        result = ai_permutation_synthesis_sync(
+        result = ai_permutation_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -414,10 +447,10 @@ class TestAIPauliNetworkSync:
             "optimized_circuit_qasm": "optimized_circuit_qasm",
         }
         mocker_run_sync = mocker.patch(
-            "qiskit_ibm_transpiler_mcp_server.sync._run_async",
+            "qiskit_ibm_transpiler_mcp_server.utils._run_async",
             return_value=mock_response,
         )
-        result = ai_pauli_network_synthesis_sync(
+        result = ai_pauli_network_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -491,7 +524,7 @@ class TestAIPauliNetworkSync:
         """
         Failed test AI Pauli Network synthesis sync tool with existing backend, quantum circuit and PassManager
         """
-        result = ai_pauli_network_synthesis_sync(
+        result = ai_pauli_network_synthesis.sync(
             circuit_qasm=mock_circuit_qasm,
             backend_name=mock_backend,
         )
@@ -511,10 +544,10 @@ class TestSetupIBMQuantumAccountSync:
             "available_backends": 10,
         }
         run_async_mock = mocker.patch(
-            "qiskit_ibm_transpiler_mcp_server.sync._run_async"
+            "qiskit_ibm_transpiler_mcp_server.utils._run_async"
         )
         run_async_mock.return_value = mock_response
-        result = setup_ibm_quantum_account_sync("test_token")
+        result = setup_ibm_quantum_account.sync("test_token")
         assert result["status"] == "success"
         assert result["available_backends"] == 10
 
@@ -528,10 +561,10 @@ class TestSetupIBMQuantumAccountSync:
         }
 
         run_async_mock = mocker.patch(
-            "qiskit_ibm_transpiler_mcp_server.sync._run_async"
+            "qiskit_ibm_transpiler_mcp_server.utils._run_async"
         )
         run_async_mock.return_value = mock_response
-        result = setup_ibm_quantum_account_sync("")
+        result = setup_ibm_quantum_account.sync("")
 
         assert result["status"] == "success"
         assert result["available_backends"] == 5

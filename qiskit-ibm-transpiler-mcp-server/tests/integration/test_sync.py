@@ -1,9 +1,9 @@
-from qiskit_ibm_transpiler_mcp_server.sync import (
-    ai_routing_sync,
-    ai_clifford_synthesis_sync,
-    ai_linear_function_synthesis_sync,
-    ai_pauli_network_synthesis_sync,
-    ai_permutation_synthesis_sync,
+from qiskit_ibm_transpiler_mcp_server.qta import (
+    ai_routing,
+    ai_clifford_synthesis,
+    ai_linear_function_synthesis,
+    ai_permutation_synthesis,
+    ai_pauli_network_synthesis,
 )
 from tests.utils.helpers import calculate_2q_count_and_depth_improvement
 import pytest
@@ -20,7 +20,7 @@ class TestAIRoutingSync:
         with open("tests/qasm/correct_qasm_1", "r") as f:
             qasm_str = f.read()
         backend_name = "ibm_torino"
-        result = ai_routing_sync(
+        result = ai_routing.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -37,7 +37,7 @@ class TestAIRoutingSync:
             qasm_str = f.read()
         backend_name = "ibm_fake"
 
-        result = ai_routing_sync(
+        result = ai_routing.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -55,7 +55,7 @@ class TestAIRoutingSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_routing_sync(
+        result = ai_routing.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -74,7 +74,7 @@ class TestAICliffordSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_clifford_synthesis_sync(
+        result = ai_clifford_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -98,7 +98,7 @@ class TestAICliffordSync:
             qasm_str = f.read()
         backend_name = "ibm_fake"
 
-        result = ai_clifford_synthesis_sync(
+        result = ai_clifford_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -114,7 +114,7 @@ class TestAICliffordSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_clifford_synthesis_sync(
+        result = ai_clifford_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -133,7 +133,7 @@ class TestAILinearFunctionSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_linear_function_synthesis_sync(
+        result = ai_linear_function_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -157,7 +157,7 @@ class TestAILinearFunctionSync:
             qasm_str = f.read()
         backend_name = "ibm_fake"
 
-        result = ai_linear_function_synthesis_sync(
+        result = ai_linear_function_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -173,7 +173,7 @@ class TestAILinearFunctionSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_linear_function_synthesis_sync(
+        result = ai_linear_function_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -192,7 +192,7 @@ class TestAIPermutationSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_permutation_synthesis_sync(
+        result = ai_permutation_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -216,7 +216,7 @@ class TestAIPermutationSync:
             qasm_str = f.read()
         backend_name = "ibm_fake"
 
-        result = ai_permutation_synthesis_sync(
+        result = ai_permutation_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -232,7 +232,7 @@ class TestAIPermutationSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_permutation_synthesis_sync(
+        result = ai_permutation_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -251,7 +251,7 @@ class TestAIPauliNetworkSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_pauli_network_synthesis_sync(
+        result = ai_pauli_network_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -275,7 +275,7 @@ class TestAIPauliNetworkSync:
             qasm_str = f.read()
         backend_name = "ibm_fake"
 
-        result = ai_pauli_network_synthesis_sync(
+        result = ai_pauli_network_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
@@ -291,7 +291,7 @@ class TestAIPauliNetworkSync:
             qasm_str = f.read()
         backend_name = "ibm_torino"
 
-        result = ai_pauli_network_synthesis_sync(
+        result = ai_pauli_network_synthesis.sync(
             circuit_qasm=qasm_str,
             backend_name=backend_name,
         )
