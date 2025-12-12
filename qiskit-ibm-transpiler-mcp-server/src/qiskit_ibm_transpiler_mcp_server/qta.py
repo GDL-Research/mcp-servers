@@ -3,6 +3,7 @@ from typing import Any, Literal
 from qiskit_ibm_transpiler_mcp_server.utils import (
     load_qasm_circuit,
     get_backend_service,
+    with_sync,
 )
 
 from qiskit.transpiler import PassManager  # type: ignore[import-untyped]
@@ -20,6 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@with_sync
 async def ai_routing(
     circuit_qasm: str,
     backend_name: str,
@@ -86,6 +88,7 @@ async def ai_routing(
         return {"status": "error", "message": f"{e}"}
 
 
+@with_sync
 async def ai_clifford_synthesis(
     circuit_qasm: str,
     backend_name: str,
@@ -139,6 +142,7 @@ async def ai_clifford_synthesis(
         return {"status": "error", "message": f"{e}"}
 
 
+@with_sync
 async def ai_linear_function_synthesis(
     circuit_qasm: str,
     backend_name: str,
@@ -191,6 +195,7 @@ async def ai_linear_function_synthesis(
         return {"status": "error", "message": f"{e}"}
 
 
+@with_sync
 async def ai_permutation_synthesis(
     circuit_qasm: str,
     backend_name: str,
@@ -243,6 +248,7 @@ async def ai_permutation_synthesis(
         return {"status": "error", "message": f"{e}"}
 
 
+@with_sync
 async def ai_pauli_network_synthesis(
     circuit_qasm: str,
     backend_name: str,
