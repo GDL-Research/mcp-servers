@@ -1,16 +1,73 @@
 from qiskit.qasm3 import loads  # type: ignore[import-untyped]
-from typing import Any
 
 
 from qiskit_ibm_transpiler_mcp_server.qiskit_runtime_service_provider import (
     QiskitRuntimeServiceProvider,
 )
 
-from typing import Optional
+import asyncio  # type: ignore[import-untyped]
+from typing import Optional, TypeVar, Any
+from collections.abc import Callable, Coroutine
+from functools import wraps
 import os
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Apply nest_asyncio to allow running async code in environments with existing event loops
+try:
+    import nest_asyncio  # type: ignore[import-not-found]
+
+    nest_asyncio.apply()
+except ImportError:
+    pass
+
+
+F = TypeVar("F", bound=Callable[..., Any])
+T = TypeVar("T")
+
+
+def _run_async(coro: Coroutine[Any, Any, T]) -> T:
+    """Helper to run async functions synchronously.
+
+    This handles both cases:
+    - Running in a Jupyter notebook or other environment with an existing event loop
+    - Running in a standard Python script without an event loop
+    """
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # We're in a running loop (e.g., Jupyter), use run_until_complete
+            # This works because nest_asyncio allows nested loops
+            return loop.run_until_complete(coro)
+        else:
+            return loop.run_until_complete(coro)
+    except RuntimeError:
+        # No event loop exists, create one
+        return asyncio.run(coro)
+
+
+def with_sync(func: F) -> F:
+    """Decorator that adds a `.sync` attribute to async functions for synchronous execution.
+
+    Usage:
+        @with_sync
+        async def my_async_function(arg: str) -> Dict[str, Any]:
+            ...
+
+        # Async call
+        result = await my_async_function("hello")
+
+        # Sync call
+        result = my_async_function.sync("hello")
+    """
+
+    @wraps(func)
+    def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+        return _run_async(func(*args, **kwargs))
+
+    func.sync = sync_wrapper  # type: ignore[attr-defined]
+    return func
 
 
 def load_qasm_circuit(qasm_string: str) -> dict[str, Any]:
@@ -75,6 +132,7 @@ def get_token_from_env() -> Optional[str]:
     return None
 
 
+@with_sync
 async def setup_ibm_quantum_account(
     token: Optional[str] = None, channel: str = "ibm_quantum_platform"
 ) -> dict[str, Any]:
