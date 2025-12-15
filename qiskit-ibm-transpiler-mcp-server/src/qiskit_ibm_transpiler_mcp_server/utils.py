@@ -1,22 +1,33 @@
-from qiskit.qasm3 import loads  # type: ignore[import-untyped]
+# This code is part of Qiskit.
+#
+# (C) Copyright IBM 2025.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+import asyncio
+import logging
+import os
+from collections.abc import Callable, Coroutine
+from functools import wraps
+from typing import Any, TypeVar
 
+from qiskit.qasm3 import loads  # type: ignore[import-untyped]
 
 from qiskit_ibm_transpiler_mcp_server.qiskit_runtime_service_provider import (
     QiskitRuntimeServiceProvider,
 )
 
-import asyncio  # type: ignore[import-untyped]
-from typing import Optional, TypeVar, Any
-from collections.abc import Callable, Coroutine
-from functools import wraps
-import os
-import logging
 
 logger = logging.getLogger(__name__)
 
 # Apply nest_asyncio to allow running async code in environments with existing event loops
 try:
-    import nest_asyncio  # type: ignore[import-not-found]
+    import nest_asyncio
 
     nest_asyncio.apply()
 except ImportError:
@@ -80,9 +91,7 @@ def load_qasm_circuit(qasm_string: str) -> dict[str, Any]:
         circuit = loads(qasm_string)
         return {"status": "success", "circuit": circuit}
     except Exception as e:
-        logger.error(
-            f"Error in loading QuantumCircuit object from QASM 3.0 string: {e}"
-        )
+        logger.error(f"Error in loading QuantumCircuit object from QASM 3.0 string: {e}")
         return {
             "status": "error",
             "message": "QASM 3.0 string not valid. Cannot be loaded as QuantumCircuit.",
@@ -111,11 +120,11 @@ async def get_backend_service(backend_name: str) -> dict[str, Any]:
         logger.error(f"Failed to find backend {backend_name}: {e}")
         return {
             "status": "error",
-            "message": f"Failed to find backend {backend_name}: {str(e)}",
+            "message": f"Failed to find backend {backend_name}: {e!s}",
         }
 
 
-def get_token_from_env() -> Optional[str]:
+def get_token_from_env() -> str | None:
     """
     Get IBM Quantum token from environment variables.
 
@@ -134,7 +143,7 @@ def get_token_from_env() -> Optional[str]:
 
 @with_sync
 async def setup_ibm_quantum_account(
-    token: Optional[str] = None, channel: str = "ibm_quantum_platform"
+    token: str | None = None, channel: str = "ibm_quantum_platform"
 ) -> dict[str, Any]:
     if not token or not token.strip():
         env_token = get_token_from_env()
@@ -166,5 +175,5 @@ async def setup_ibm_quantum_account(
         logger.error(f"Failed to set up IBM Quantum account: {e}")
         return {
             "status": "error",
-            "message": f"Failed to set up IBM Quantum account: {str(e)}",
+            "message": f"Failed to set up IBM Quantum account: {e!s}",
         }
