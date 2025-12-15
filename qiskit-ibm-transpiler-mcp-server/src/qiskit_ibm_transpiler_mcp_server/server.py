@@ -1,19 +1,29 @@
-from fastmcp import FastMCP
-from typing import Literal, Any
+# This code is part of Qiskit.
+#
+# (C) Copyright IBM 2025.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+import logging
+from typing import Any, Literal
 
-from qiskit_ibm_transpiler_mcp_server.utils import setup_ibm_quantum_account
+from fastmcp import FastMCP
 
 from qiskit_ibm_transpiler_mcp_server.qta import (
-    ai_routing,
-    ai_linear_function_synthesis,
     ai_clifford_synthesis,
+    ai_linear_function_synthesis,
     ai_pauli_network_synthesis,
     ai_permutation_synthesis,
+    ai_routing,
 )
-import logging
+from qiskit_ibm_transpiler_mcp_server.utils import setup_ibm_quantum_account
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 # Initialize FastMCP server
@@ -46,9 +56,7 @@ async def ai_routing_tool(
     backend_name: str,
     optimization_level: int = 1,
     layout_mode: str = "optimize",
-    optimization_preferences: Literal[
-        "n_cnots", "n_gates", "cnot_layers", "layers", "noise"
-    ]
+    optimization_preferences: Literal["n_cnots", "n_gates", "cnot_layers", "layers", "noise"]
     | list[Literal["n_cnots", "n_gates", "cnot_layers", "layers", "noise"]]
     | None = None,
     local_mode: bool = True,
@@ -142,7 +150,7 @@ async def ai_pauli_network_synthesis_tool(
     )
 
 
-def main():
+def main() -> None:
     """Run the server."""
     mcp.run(transport="stdio")
 
