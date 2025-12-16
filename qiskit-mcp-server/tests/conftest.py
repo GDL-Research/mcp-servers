@@ -110,10 +110,14 @@ def invalid_qasm() -> str:
 def sample_coupling_map() -> list[list[int]]:
     """Sample coupling map for a linear 5-qubit device."""
     return [
-        [0, 1], [1, 0],
-        [1, 2], [2, 1],
-        [2, 3], [3, 2],
-        [3, 4], [4, 3],
+        [0, 1],
+        [1, 0],
+        [1, 2],
+        [2, 1],
+        [2, 3],
+        [3, 2],
+        [3, 4],
+        [4, 3],
     ]
 
 

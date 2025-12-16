@@ -106,8 +106,7 @@ def _parse_coupling_map(
         if topology not in COUPLING_MAP_TOPOLOGIES:
             logger.warning(f"Unknown topology requested: {topology}")
             raise ValueError(
-                f"Unknown topology: {topology}. "
-                f"Available: {list(COUPLING_MAP_TOPOLOGIES.keys())}"
+                f"Unknown topology: {topology}. Available: {list(COUPLING_MAP_TOPOLOGIES.keys())}"
             )
 
         return _create_topology(topology, num_qubits)
@@ -190,9 +189,7 @@ def _parse_circuit(circuit_input: str) -> QuantumCircuit:
     except Exception as e:
         logger.debug(f"QASM 3.0 parsing failed: {e}")
 
-    raise ValueError(
-        "Could not parse circuit. Please provide a valid OpenQASM 2.0 or 3.0 string."
-    )
+    raise ValueError("Could not parse circuit. Please provide a valid OpenQASM 2.0 or 3.0 string.")
 
 
 def _validate_circuit_size(circuit: QuantumCircuit) -> str | None:
@@ -214,9 +211,7 @@ def _validate_circuit_size(circuit: QuantumCircuit) -> str | None:
     return None
 
 
-def _validate_initial_layout(
-    initial_layout: list[int] | None, num_qubits: int
-) -> str | None:
+def _validate_initial_layout(initial_layout: list[int] | None, num_qubits: int) -> str | None:
     """Validate initial_layout parameter.
 
     Returns:
@@ -268,8 +263,7 @@ def _resolve_basis_gates(
         if basis_gates in BASIS_GATE_SETS:
             return BASIS_GATE_SETS[basis_gates], None
         return None, (
-            f"Unknown basis gate set: {basis_gates}. "
-            f"Available: {list(BASIS_GATE_SETS.keys())}"
+            f"Unknown basis gate set: {basis_gates}. Available: {list(BASIS_GATE_SETS.keys())}"
         )
 
     return basis_gates, None
@@ -371,15 +365,11 @@ async def transpile_circuit(
         # Calculate improvements
         depth_reduction = original_info["depth"] - transpiled_info["depth"]
         depth_reduction_pct = (
-            (depth_reduction / original_info["depth"] * 100)
-            if original_info["depth"] > 0
-            else 0
+            (depth_reduction / original_info["depth"] * 100) if original_info["depth"] > 0 else 0
         )
         size_reduction = original_info["size"] - transpiled_info["size"]
         size_reduction_pct = (
-            (size_reduction / original_info["size"] * 100)
-            if original_info["size"] > 0
-            else 0
+            (size_reduction / original_info["size"] * 100) if original_info["size"] > 0 else 0
         )
 
         result: dict[str, Any] = {
