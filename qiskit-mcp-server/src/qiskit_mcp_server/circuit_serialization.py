@@ -46,7 +46,7 @@ import io
 import logging
 from typing import Any, Literal
 
-from qiskit import QuantumCircuit, qpy
+from qiskit import QuantumCircuit, qasm2, qpy
 from qiskit.qasm3 import dumps as qasm3_dumps
 from qiskit.qasm3 import loads as qasm3_loads
 
@@ -105,10 +105,13 @@ def detect_circuit_format(circuit_data: str) -> CircuitFormat:
 
 
 def load_qasm_circuit(qasm_string: str) -> dict[str, Any]:
-    """Load a quantum circuit from a QASM 3.0 string.
+    """Load a quantum circuit from a QASM 3.0 or QASM 2.0 string.
+
+    Attempts to parse as QASM3 first, then falls back to QASM2 for
+    backwards compatibility.
 
     Args:
-        qasm_string: A valid OpenQASM 3.0 string describing the circuit.
+        qasm_string: A valid OpenQASM 3.0 or 2.0 string describing the circuit.
 
     Returns:
         A dictionary with:
@@ -122,14 +125,22 @@ def load_qasm_circuit(qasm_string: str) -> dict[str, Any]:
         >>> result["status"]
         'success'
     """
+    # Try QASM3 first
     try:
         circuit = qasm3_loads(qasm_string)
         return {"status": "success", "circuit": circuit}
-    except Exception as e:
-        logger.error(f"Error loading QASM 3.0: {e}")
+    except Exception as qasm3_error:
+        logger.debug(f"QASM3 parsing failed: {qasm3_error}, trying QASM2")
+
+    # Fall back to QASM2
+    try:
+        circuit = qasm2.loads(qasm_string)
+        return {"status": "success", "circuit": circuit}
+    except Exception as qasm2_error:
+        logger.error(f"Both QASM3 and QASM2 parsing failed: {qasm2_error}")
         return {
             "status": "error",
-            "message": "QASM 3.0 string not valid. Cannot be loaded as QuantumCircuit.",
+            "message": "QASM string not valid. Cannot be loaded as QuantumCircuit (tried both QASM3 and QASM2).",
         }
 
 

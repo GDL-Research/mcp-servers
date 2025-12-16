@@ -120,14 +120,14 @@ class TestLoadQasmCircuit:
         assert isinstance(result["circuit"], QuantumCircuit)
 
     def test_load_with_failure(self):
-        """Load a wrong, bad-formatted, QASM 3.0 string"""
+        """Load a wrong, bad-formatted, QASM string"""
         with open(TESTS_DIR / "qasm" / "wrong_qasm_1") as f:
             wrong_qasm = f.read()
 
         result = load_qasm_circuit(qasm_string=wrong_qasm)
 
         assert result["status"] == "error"
-        assert result["message"] == "QASM 3.0 string not valid. Cannot be loaded as QuantumCircuit."
+        assert "QASM string not valid" in result["message"]
 
 
 class TestSetupIBMAccount:

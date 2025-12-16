@@ -63,12 +63,27 @@ class TestLoadQasmCircuit:
         assert result["circuit"].num_qubits == 2
 
     def test_load_invalid_qasm(self, invalid_qasm3):
-        """Test loading an invalid QASM 3.0 string."""
+        """Test loading an invalid QASM string."""
         result = load_qasm_circuit(invalid_qasm3)
 
         assert result["status"] == "error"
         assert "message" in result
-        assert "QASM 3.0 string not valid" in result["message"]
+        assert "QASM string not valid" in result["message"]
+
+    def test_load_qasm2_fallback(self):
+        """Test that QASM2 strings are loaded via fallback."""
+        qasm2_string = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+cx q[0],q[1];
+"""
+        result = load_qasm_circuit(qasm2_string)
+
+        assert result["status"] == "success"
+        assert isinstance(result["circuit"], QuantumCircuit)
+        assert result["circuit"].num_qubits == 2
 
 
 class TestLoadQpyCircuit:
