@@ -46,19 +46,18 @@ class TestRunSynthesis:
             "local_mode": True,
         }
         result = await _run_synthesis_pass(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
             synthesis_pass_class=mock_ai_synthesis_success,
             pass_kwargs=ai_synthesis_pass_kwargs,
         )
-        assert result == {
-            "status": "success",
-            "optimized_circuit_qasm": "optimized_circuit",
-        }
+        assert result["status"] == "success"
+        assert result["optimized_circuit"] == "optimized_circuit"
+        assert result["circuit_format"] == "qasm3"
         mock_get_backend_service_success.assert_awaited_once_with(backend_name=mock_backend)
-        mock_load_qasm_circuit_success.assert_called_once_with("dummy_circuit_qasm")
+        mock_load_qasm_circuit_success.assert_called_once_with("dummy_circuit_qasm", circuit_format="qasm3")
         mock_pass_manager_success.run.assert_called_once_with("input_circuit")
-        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value)
+        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value, circuit_format="qasm3")
         mock_ai_synthesis_success.assert_called_once_with(
             backend=mock_get_backend_service_success.return_value["backend"],
             optimization_level=1,
@@ -85,7 +84,7 @@ class TestRunSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_success",
                 "mock_ai_synthesis_success",
-                "Error in loading QuantumCircuit from QASM3.0",
+                "Error in loading QuantumCircuit",
             ),
             (
                 "mock_get_backend_service_success",
@@ -101,7 +100,7 @@ class TestRunSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_failure",
                 "mock_ai_synthesis_success",
-                "QASM dumps failed",
+                "Circuit dump failed",
             ),
             (
                 "mock_get_backend_service_success",
@@ -141,7 +140,7 @@ class TestRunSynthesis:
             "local_mode": True,
         }
         result = await _run_synthesis_pass(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
             synthesis_pass_class=ai_synthesis_fixture,
             pass_kwargs=ai_synthesis_pass_kwargs,
@@ -168,17 +167,16 @@ class TestAIRouting:
         Successful test AI routing tool with existing backend, quantum circuit and PassManager
         """
         result = await ai_routing(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
         )
-        assert result == {
-            "status": "success",
-            "optimized_circuit_qasm": "optimized_circuit",
-        }
+        assert result["status"] == "success"
+        assert result["optimized_circuit"] == "optimized_circuit"
+        assert result["circuit_format"] == "qasm3"
         mock_get_backend_service_success.assert_awaited_once_with(backend_name=mock_backend)
-        mock_load_qasm_circuit_success.assert_called_once_with("dummy_circuit_qasm")
+        mock_load_qasm_circuit_success.assert_called_once_with("dummy_circuit_qasm", circuit_format="qasm3")
         mock_pass_manager_success.run.assert_called_once_with("input_circuit")
-        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value)
+        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value, circuit_format="qasm3")
         mock_ai_routing_success.assert_called_once_with(
             backend=mock_get_backend_service_success.return_value["backend"],
             optimization_level=1,
@@ -205,7 +203,7 @@ class TestAIRouting:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_success",
                 "mock_ai_routing_success",
-                "Error in loading QuantumCircuit from QASM3.0",
+                "Error in loading QuantumCircuit",
             ),
             (
                 "mock_get_backend_service_success",
@@ -221,7 +219,7 @@ class TestAIRouting:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_failure",
                 "mock_ai_routing_success",
-                "QASM dumps failed",
+                "Circuit dump failed",
             ),
             (
                 "mock_get_backend_service_success",
@@ -255,7 +253,7 @@ class TestAIRouting:
         Failed test AI routing tool with existing backend, quantum circuit and PassManager
         """
         result = await ai_routing(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
         )
         assert result["status"] == "error"
@@ -280,17 +278,16 @@ class TestAICliffordSynthesis:
         Successful test AI Clifford synthesis tool with existing backend, quantum circuit and PassManager.
         """
         result = await ai_clifford_synthesis(
-            circuit_qasm=mock_circuit_qasm, backend_name=mock_backend
+            circuit=mock_circuit_qasm, backend_name=mock_backend
         )
 
-        assert result == {
-            "status": "success",
-            "optimized_circuit_qasm": "optimized_circuit",
-        }
+        assert result["status"] == "success"
+        assert result["optimized_circuit"] == "optimized_circuit"
+        assert result["circuit_format"] == "qasm3"
         mock_get_backend_service_success.assert_awaited_once_with(backend_name=mock_backend)
-        mock_load_qasm_circuit_success.assert_called_once_with("dummy_circuit_qasm")
+        mock_load_qasm_circuit_success.assert_called_once_with("dummy_circuit_qasm", circuit_format="qasm3")
         mock_pass_manager_success.run.assert_called_once_with("input_circuit")
-        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value)
+        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value, circuit_format="qasm3")
         mock_ai_clifford_synthesis_success.assert_called_once_with(
             backend=mock_get_backend_service_success.return_value["backend"],
             replace_only_if_better=True,
@@ -315,7 +312,7 @@ class TestAICliffordSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_success",
                 "mock_ai_clifford_synthesis_success",
-                "Error in loading QuantumCircuit from QASM3.0",
+                "Error in loading QuantumCircuit",
             ),
             (
                 "mock_get_backend_service_success",
@@ -331,7 +328,7 @@ class TestAICliffordSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_failure",
                 "mock_ai_clifford_synthesis_success",
-                "QASM dumps failed",
+                "Circuit dump failed",
             ),
             (
                 "mock_get_backend_service_success",
@@ -365,7 +362,7 @@ class TestAICliffordSynthesis:
         Failed test AI Clifford synthesis tool with existing backend, quantum circuit and PassManager.
         """
         result = await ai_clifford_synthesis(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
         )
         assert result["status"] == "error"
@@ -390,17 +387,16 @@ class TestAILinearFunctionSynthesis:
         Successful test AI Linear Function synthesis tool with existing backend, quantum circuit and PassManager
         """
         result = await ai_linear_function_synthesis(
-            circuit_qasm=mock_circuit_qasm, backend_name=mock_backend
+            circuit=mock_circuit_qasm, backend_name=mock_backend
         )
 
-        assert result == {
-            "status": "success",
-            "optimized_circuit_qasm": "optimized_circuit",
-        }
+        assert result["status"] == "success"
+        assert result["optimized_circuit"] == "optimized_circuit"
+        assert result["circuit_format"] == "qasm3"
         mock_get_backend_service_success.assert_awaited_once_with(backend_name=mock_backend)
-        mock_load_qasm_circuit_success.assert_called_once_with(mock_circuit_qasm)
+        mock_load_qasm_circuit_success.assert_called_once_with(mock_circuit_qasm, circuit_format="qasm3")
         mock_pass_manager_success.run.assert_called_once_with("input_circuit")
-        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value)
+        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value, circuit_format="qasm3")
         mock_ai_linear_function_synthesis_success.assert_called_once_with(
             backend=mock_get_backend_service_success.return_value["backend"],
             replace_only_if_better=True,
@@ -425,7 +421,7 @@ class TestAILinearFunctionSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_success",
                 "mock_ai_linear_function_synthesis_success",
-                "Error in loading QuantumCircuit from QASM3.0",
+                "Error in loading QuantumCircuit",
             ),
             (
                 "mock_get_backend_service_success",
@@ -441,7 +437,7 @@ class TestAILinearFunctionSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_failure",
                 "mock_ai_linear_function_synthesis_success",
-                "QASM dumps failed",
+                "Circuit dump failed",
             ),
             (
                 "mock_get_backend_service_success",
@@ -475,7 +471,7 @@ class TestAILinearFunctionSynthesis:
         Failed test AI Linear Function synthesis tool with existing backend, quantum circuit and PassManager
         """
         result = await ai_linear_function_synthesis(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
         )
         assert result["status"] == "error"
@@ -500,17 +496,16 @@ class TestAIPermutationSynthesis:
         Successful test AI Permutation synthesis tool with existing backend, quantum circuit and PassManager-
         """
         result = await ai_permutation_synthesis(
-            circuit_qasm=mock_circuit_qasm, backend_name=mock_backend
+            circuit=mock_circuit_qasm, backend_name=mock_backend
         )
 
-        assert result == {
-            "status": "success",
-            "optimized_circuit_qasm": "optimized_circuit",
-        }
+        assert result["status"] == "success"
+        assert result["optimized_circuit"] == "optimized_circuit"
+        assert result["circuit_format"] == "qasm3"
         mock_get_backend_service_success.assert_awaited_once_with(backend_name=mock_backend)
-        mock_load_qasm_circuit_success.assert_called_once_with(mock_circuit_qasm)
+        mock_load_qasm_circuit_success.assert_called_once_with(mock_circuit_qasm, circuit_format="qasm3")
         mock_pass_manager_success.run.assert_called_once_with("input_circuit")
-        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value)
+        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value, circuit_format="qasm3")
         mock_ai_permutation_synthesis_success.assert_called_once_with(
             backend=mock_get_backend_service_success.return_value["backend"],
             replace_only_if_better=True,
@@ -535,7 +530,7 @@ class TestAIPermutationSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_success",
                 "mock_ai_permutation_synthesis_success",
-                "Error in loading QuantumCircuit from QASM3.0",
+                "Error in loading QuantumCircuit",
             ),
             (
                 "mock_get_backend_service_success",
@@ -551,7 +546,7 @@ class TestAIPermutationSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_failure",
                 "mock_ai_permutation_synthesis_success",
-                "QASM dumps failed",
+                "Circuit dump failed",
             ),
             (
                 "mock_get_backend_service_success",
@@ -585,7 +580,7 @@ class TestAIPermutationSynthesis:
         Failed test AI Permutation synthesis tool with existing backend, quantum circuit and PassManager
         """
         result = await ai_permutation_synthesis(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
         )
         assert result["status"] == "error"
@@ -610,17 +605,16 @@ class TestAIPauliNetworkSynthesis:
         Successful test AI Pauli Network synthesis tool with existing backend, quantum circuit and PassManager
         """
         result = await ai_pauli_network_synthesis(
-            circuit_qasm=mock_circuit_qasm, backend_name=mock_backend
+            circuit=mock_circuit_qasm, backend_name=mock_backend
         )
 
-        assert result == {
-            "status": "success",
-            "optimized_circuit_qasm": "optimized_circuit",
-        }
+        assert result["status"] == "success"
+        assert result["optimized_circuit"] == "optimized_circuit"
+        assert result["circuit_format"] == "qasm3"
         mock_get_backend_service_success.assert_awaited_once_with(backend_name=mock_backend)
-        mock_load_qasm_circuit_success.assert_called_once_with(mock_circuit_qasm)
+        mock_load_qasm_circuit_success.assert_called_once_with(mock_circuit_qasm, circuit_format="qasm3")
         mock_pass_manager_success.run.assert_called_once_with("input_circuit")
-        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value)
+        mock_dumps_qasm_success.assert_called_once_with(mock_pass_manager_success.run.return_value, circuit_format="qasm3")
         mock_ai_pauli_network_synthesis_success.assert_called_once_with(
             backend=mock_get_backend_service_success.return_value["backend"],
             replace_only_if_better=True,
@@ -645,7 +639,7 @@ class TestAIPauliNetworkSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_success",
                 "mock_ai_pauli_network_synthesis_success",
-                "Error in loading QuantumCircuit from QASM3.0",
+                "Error in loading QuantumCircuit",
             ),
             (
                 "mock_get_backend_service_success",
@@ -661,7 +655,7 @@ class TestAIPauliNetworkSynthesis:
                 "mock_pass_manager_success",
                 "mock_dumps_qasm_failure",
                 "mock_ai_pauli_network_synthesis_success",
-                "QASM dumps failed",
+                "Circuit dump failed",
             ),
             (
                 "mock_get_backend_service_success",
@@ -695,7 +689,7 @@ class TestAIPauliNetworkSynthesis:
         Failed test AI Pauli Network synthesis tool with existing backend, quantum circuit and PassManager
         """
         result = await ai_pauli_network_synthesis(
-            circuit_qasm=mock_circuit_qasm,
+            circuit=mock_circuit_qasm,
             backend_name=mock_backend,
         )
         assert result["status"] == "error"

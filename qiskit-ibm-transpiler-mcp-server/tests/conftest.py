@@ -28,6 +28,12 @@ def mock_circuit_qasm():
 
 
 @pytest.fixture
+def mock_circuit_qpy():
+    """Mock QPY circuit (base64-encoded)"""
+    return "UFFZX0RBVEFfTU9DSw=="  # Mock base64 QPY data
+
+
+@pytest.fixture
 def mock_backend():
     """Mock backend name"""
     return "fake_backend"
@@ -122,37 +128,84 @@ def ai_pauli_networks_synthesis_fixture(request):
 
 @pytest.fixture
 def mock_load_qasm_circuit_success(mocker):
-    """Successful loading of QuantumCircuit object from QASM3.0 string"""
-    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.load_qasm_circuit")
+    """Successful loading of QuantumCircuit object from QASM3.0 string (legacy fixture)"""
+    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.load_circuit")
     mock.return_value = {"status": "success", "circuit": "input_circuit"}
     return mock
 
 
 @pytest.fixture
 def mock_load_qasm_circuit_failure(mocker):
-    """Failed loading of QuantumCircuit object from QASM3.0 string"""
-    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.load_qasm_circuit")
+    """Failed loading of QuantumCircuit object from QASM3.0 string (legacy fixture)"""
+    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.load_circuit")
     mock.return_value = {
         "status": "error",
-        "message": "Error in loading QuantumCircuit from QASM3.0",
+        "message": "Error in loading QuantumCircuit",
     }
     return mock
 
 
 @pytest.fixture
+def mock_load_circuit_success(mocker):
+    """Successful loading of QuantumCircuit object (QASM3 or QPY)"""
+    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.load_circuit")
+    mock.return_value = {"status": "success", "circuit": "input_circuit"}
+    return mock
+
+
+@pytest.fixture
+def mock_load_circuit_failure(mocker):
+    """Failed loading of QuantumCircuit object (QASM3 or QPY)"""
+    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.load_circuit")
+    mock.return_value = {
+        "status": "error",
+        "message": "Error in loading QuantumCircuit",
+    }
+    return mock
+
+
+@pytest.fixture
+def mock_dumps_qasm_failure(mocker):
+    """Failed dump_circuit method (legacy fixture name for backward compat)"""
+    mock = mocker.patch(
+        "qiskit_ibm_transpiler_mcp_server.qta.dump_circuit",
+        side_effect=Exception("Circuit dump failed"),
+    )
+    return mock
+
+
+@pytest.fixture
 def mock_dumps_qasm_success(mocker):
-    """Successful dumps methods for QASM3.0 string"""
-    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.dumps")
+    """Successful dump_circuit method"""
+    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.dump_circuit")
     mock.return_value = "optimized_circuit"
     return mock
 
 
 @pytest.fixture
 def mock_dumps_qasm_failure(mocker):
-    """Failed dumps methods for QASM3.0 string"""
+    """Failed dump_circuit method"""
     mock = mocker.patch(
-        "qiskit_ibm_transpiler_mcp_server.qta.dumps",
-        side_effect=Exception("QASM dumps failed"),
+        "qiskit_ibm_transpiler_mcp_server.qta.dump_circuit",
+        side_effect=Exception("Circuit dump failed"),
+    )
+    return mock
+
+
+@pytest.fixture
+def mock_dump_circuit_success(mocker):
+    """Successful dump_circuit method (QASM3 or QPY)"""
+    mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.dump_circuit")
+    mock.return_value = "optimized_circuit"
+    return mock
+
+
+@pytest.fixture
+def mock_dump_circuit_failure(mocker):
+    """Failed dump_circuit method (QASM3 or QPY)"""
+    mock = mocker.patch(
+        "qiskit_ibm_transpiler_mcp_server.qta.dump_circuit",
+        side_effect=Exception("Circuit dump failed"),
     )
     return mock
 
