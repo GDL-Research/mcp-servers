@@ -53,7 +53,7 @@ async def _run_synthesis_pass(
             "message": "backend is required and cannot be empty",
         }
     try:
-        logger.info(f"{synthesis_pass_class.__class__.__name__} pass")
+        logger.info(f"{synthesis_pass_class.__name__} pass")
         backend_service_coroutine = await get_backend_service(backend_name=backend_name)
         if backend_service_coroutine["status"] == "success":
             backend_service = backend_service_coroutine["backend"]
@@ -72,7 +72,7 @@ async def _run_synthesis_pass(
         else:
             return {"status": "error", "message": loaded_quantum_circuit["message"]}
     except Exception as e:
-        logger.error(f"{synthesis_pass_class.__class__.__name__} failed: {e}")
+        logger.error(f"{synthesis_pass_class.__name__} failed: {e}")
         return {"status": "error", "message": f"{e}"}
 
 
