@@ -10,6 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 import os
+from pathlib import Path
 from unittest.mock import MagicMock, create_autospec, patch
 
 import pytest
@@ -24,6 +25,9 @@ from qiskit_ibm_transpiler_mcp_server.utils import (
     load_qasm_circuit,
     setup_ibm_quantum_account,
 )
+
+# Get the tests directory path relative to this test file
+TESTS_DIR = Path(__file__).parent.parent
 
 
 class TestGetTokenFromEnv:
@@ -107,7 +111,7 @@ class TestLoadQasmCircuit:
 
     def test_load_with_success(self):
         """Load a correct, well-formatted, QASM 3.0 string"""
-        with open("tests/qasm/correct_qasm_1") as f:
+        with open(TESTS_DIR / "qasm" / "correct_qasm_1") as f:
             correct_qasm = f.read()
 
         result = load_qasm_circuit(qasm_string=correct_qasm)
@@ -117,7 +121,7 @@ class TestLoadQasmCircuit:
 
     def test_load_with_failure(self):
         """Load a wrong, bad-formatted, QASM 3.0 string"""
-        with open("tests/qasm/wrong_qasm_1") as f:
+        with open(TESTS_DIR / "qasm" / "wrong_qasm_1") as f:
             wrong_qasm = f.read()
 
         result = load_qasm_circuit(qasm_string=wrong_qasm)

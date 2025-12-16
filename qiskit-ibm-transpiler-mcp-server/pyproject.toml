@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-qiskit-mcp-server = { path = "../qiskit-mcp-server", editable = true }
+qiskit-mcp-server = { workspace = true }
 [project.optional-dependencies]
 dev = [
     "ruff>=0.11.13",

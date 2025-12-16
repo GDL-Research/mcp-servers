@@ -58,6 +58,7 @@ packages = ["src/qiskit_mcp_servers"]
 # Workspace configuration for monorepo
 [tool.uv.workspace]
 members = [
+    "qiskit-mcp-server",
     "qiskit-code-assistant-mcp-server",
     "qiskit-ibm-runtime-mcp-server",
     "qiskit-ibm-transpiler-mcp-server",
@@ -65,6 +66,7 @@ members = [
 
 # Source configuration for workspace dependencies
 [tool.uv.sources]
+qiskit-mcp-server = { workspace = true }
 qiskit-code-assistant-mcp-server = { workspace = true }
 qiskit-ibm-runtime-mcp-server = { workspace = true }
 qiskit-ibm-transpiler-mcp-server = { workspace = true }
@@ -79,7 +81,7 @@ extend = "ruff.toml"
 # Note: mypy doesn't support extend in pyproject.toml, see mypy.ini
 
 [tool.pytest.ini_options]
-testpaths = ["qiskit-code-assistant-mcp-server/tests", "qiskit-ibm-runtime-mcp-server/tests", "qiskit-ibm-transpiler-mcp-server/tests"]
+testpaths = ["qiskit-mcp-server/tests", "qiskit-code-assistant-mcp-server/tests", "qiskit-ibm-runtime-mcp-server/tests", "qiskit-ibm-transpiler-mcp-server/tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
@@ -100,6 +102,7 @@ markers = [
 
 [tool.coverage.run]
 source = [
+    "qiskit-mcp-server/src",
     "qiskit-code-assistant-mcp-server/src",
     "qiskit-ibm-runtime-mcp-server/src",
     "qiskit-ibm-transpiler-mcp-server/src"

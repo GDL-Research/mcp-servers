@@ -183,16 +183,6 @@ def mock_dumps_qasm_success(mocker):
 
 
 @pytest.fixture
-def mock_dumps_qasm_failure(mocker):
-    """Failed dump_circuit method"""
-    mock = mocker.patch(
-        "qiskit_ibm_transpiler_mcp_server.qta.dump_circuit",
-        side_effect=Exception("Circuit dump failed"),
-    )
-    return mock
-
-
-@pytest.fixture
 def mock_dump_circuit_success(mocker):
     """Successful dump_circuit method (QASM3 or QPY)"""
     mock = mocker.patch("qiskit_ibm_transpiler_mcp_server.qta.dump_circuit")
