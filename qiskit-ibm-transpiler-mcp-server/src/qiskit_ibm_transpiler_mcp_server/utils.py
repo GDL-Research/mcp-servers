@@ -87,8 +87,13 @@ def get_token_from_env() -> str | None:
         Token string if found in environment, None otherwise
     """
     token = os.getenv("QISKIT_IBM_TOKEN")
-    if token and token.strip() and token.strip() not in INVALID_PLACEHOLDER_TOKENS:
-        return token.strip()
+    if token and token.strip():
+        stripped = token.strip()
+        # Reject tokens that are all the same character (e.g., "xxxx", "0000")
+        # as these are likely placeholder values
+        if len(set(stripped)) == 1 or stripped in INVALID_PLACEHOLDER_TOKENS:
+            return None
+        return stripped
     return None
 
 
