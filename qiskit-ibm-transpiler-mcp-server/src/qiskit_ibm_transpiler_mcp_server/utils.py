@@ -25,6 +25,11 @@ from qiskit_ibm_transpiler_mcp_server.qiskit_runtime_service_provider import (
 
 logger = logging.getLogger(__name__)
 
+# Placeholder tokens that should be rejected during validation
+INVALID_PLACEHOLDER_TOKENS = frozenset(
+    ["<PASSWORD>", "<TOKEN>", "YOUR_TOKEN_HERE", "xxx"]
+)
+
 # Apply nest_asyncio to allow running async code in environments with existing event loops
 try:
     import nest_asyncio
@@ -47,12 +52,8 @@ def _run_async(coro: Coroutine[Any, Any, T]) -> T:
     """
     try:
         loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # We're in a running loop (e.g., Jupyter), use run_until_complete
-            # This works because nest_asyncio allows nested loops
-            return loop.run_until_complete(coro)
-        else:
-            return loop.run_until_complete(coro)
+        # This works in Jupyter/running loops because nest_asyncio allows nested loops
+        return loop.run_until_complete(coro)
     except RuntimeError:
         # No event loop exists, create one
         return asyncio.run(coro)
@@ -132,12 +133,13 @@ def get_token_from_env() -> str | None:
         Token string if found in environment, None otherwise
     """
     token = os.getenv("QISKIT_IBM_TOKEN")
-    if (
-        token
-        and token.strip()
-        and token.strip() not in ["<PASSWORD>", "<TOKEN>", "YOUR_TOKEN_HERE"]
-    ):
-        return token.strip()
+    if token and token.strip():
+        stripped = token.strip()
+        # Reject tokens that are all the same character (e.g., "xxxx", "0000")
+        # as these are likely placeholder values
+        if len(set(stripped)) == 1 or stripped in INVALID_PLACEHOLDER_TOKENS:
+            return None
+        return stripped
     return None
 
 

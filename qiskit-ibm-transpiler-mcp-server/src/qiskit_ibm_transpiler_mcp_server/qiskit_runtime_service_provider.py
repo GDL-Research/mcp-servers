@@ -15,6 +15,11 @@ from typing import Any, Optional
 
 from qiskit_ibm_runtime import QiskitRuntimeService
 
+# Placeholder tokens that should be rejected during validation
+INVALID_PLACEHOLDER_TOKENS = frozenset(
+    ["<PASSWORD>", "<TOKEN>", "YOUR_TOKEN_HERE", "xxx"]
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +87,11 @@ class QiskitRuntimeServiceProvider:
                     "No IBM Quantum token provided and no saved credentials available"
                 ) from e
 
-        # If a token is provided, validate it's not a placeholder before saving
+        # If a token is provided, validate it's not a placeholder before saving.
+        # Reject tokens that are all the same character (e.g., "xxxx", "0000")
+        # as these are likely placeholder values.
         token = token.strip()
-        if token in ["<PASSWORD>", "<TOKEN>", "YOUR_TOKEN_HERE", "xxx"]:
+        if len(set(token)) == 1 or token in INVALID_PLACEHOLDER_TOKENS:
             raise ValueError(f"Invalid token: '{token}' appears to be a placeholder value")
 
         # Save account and initialize it with the provided token
