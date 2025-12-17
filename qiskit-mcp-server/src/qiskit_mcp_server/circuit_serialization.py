@@ -19,6 +19,14 @@ QPY Format:
     circuit object including metadata, custom gates, exact numerical parameters,
     and layout information. QPY data is base64-encoded for JSON transport.
 
+    Version Compatibility:
+        - QPY version is determined by the installed Qiskit version
+        - QPY is designed to be backwards-compatible: newer Qiskit versions
+          can read QPY files created by older versions
+        - The format uses the magic bytes "QISKIT" for identification
+        - For cross-version compatibility, ensure the reading environment has
+          a Qiskit version >= the version that created the QPY data
+
 QASM3 Format:
     OpenQASM 3.0 is a text-based standard format for quantum circuits. It is
     human-readable and interoperable with other quantum computing frameworks.
