@@ -79,7 +79,12 @@ async def ai_routing_tool(
         circuit_format: Format of the input circuit - 'qasm3' (default) or 'qpy' (base64-encoded QPY for full circuit fidelity)
 
     Returns:
-        Dict with 'status' and 'circuit_qpy' (base64-encoded QPY format for precision when chaining).
+        Dict with:
+        - status: 'success' or 'error'
+        - circuit_qpy: Base64-encoded QPY format (for chaining with other tools)
+        - original_circuit: Metrics dict (num_qubits, depth, size, two_qubit_gates)
+        - optimized_circuit: Metrics dict for the optimized circuit
+        - improvements: Dict with depth_reduction and two_qubit_gate_reduction
     """
     return await ai_routing(
         circuit=circuit,
@@ -110,7 +115,12 @@ async def ai_linear_function_synthesis_tool(
         circuit_format: Format of the input circuit - 'qasm3' (default) or 'qpy' (base64-encoded QPY for full circuit fidelity)
 
     Returns:
-        Dict with 'status' and 'circuit_qpy' (base64-encoded QPY format for precision when chaining).
+        Dict with:
+        - status: 'success' or 'error'
+        - circuit_qpy: Base64-encoded QPY format (for chaining with other tools)
+        - original_circuit: Metrics dict (num_qubits, depth, size, two_qubit_gates)
+        - optimized_circuit: Metrics dict for the optimized circuit
+        - improvements: Dict with depth_reduction and two_qubit_gate_reduction
     """
     return await ai_linear_function_synthesis(
         circuit=circuit,
@@ -139,7 +149,12 @@ async def ai_clifford_synthesis_tool(
         circuit_format: Format of the input circuit - 'qasm3' (default) or 'qpy' (base64-encoded QPY for full circuit fidelity)
 
     Returns:
-        Dict with 'status' and 'circuit_qpy' (base64-encoded QPY format for precision when chaining).
+        Dict with:
+        - status: 'success' or 'error'
+        - circuit_qpy: Base64-encoded QPY format (for chaining with other tools)
+        - original_circuit: Metrics dict (num_qubits, depth, size, two_qubit_gates)
+        - optimized_circuit: Metrics dict for the optimized circuit
+        - improvements: Dict with depth_reduction and two_qubit_gate_reduction
     """
     return await ai_clifford_synthesis(
         circuit=circuit,
@@ -168,7 +183,12 @@ async def ai_permutation_synthesis_tool(
         circuit_format: Format of the input circuit - 'qasm3' (default) or 'qpy' (base64-encoded QPY for full circuit fidelity)
 
     Returns:
-        Dict with 'status' and 'circuit_qpy' (base64-encoded QPY format for precision when chaining).
+        Dict with:
+        - status: 'success' or 'error'
+        - circuit_qpy: Base64-encoded QPY format (for chaining with other tools)
+        - original_circuit: Metrics dict (num_qubits, depth, size, two_qubit_gates)
+        - optimized_circuit: Metrics dict for the optimized circuit
+        - improvements: Dict with depth_reduction and two_qubit_gate_reduction
     """
     return await ai_permutation_synthesis(
         circuit=circuit,
@@ -197,7 +217,12 @@ async def ai_pauli_network_synthesis_tool(
         circuit_format: Format of the input circuit - 'qasm3' (default) or 'qpy' (base64-encoded QPY for full circuit fidelity)
 
     Returns:
-        Dict with 'status' and 'circuit_qpy' (base64-encoded QPY format for precision when chaining).
+        Dict with:
+        - status: 'success' or 'error'
+        - circuit_qpy: Base64-encoded QPY format (for chaining with other tools)
+        - original_circuit: Metrics dict (num_qubits, depth, size, two_qubit_gates)
+        - optimized_circuit: Metrics dict for the optimized circuit
+        - improvements: Dict with depth_reduction and two_qubit_gate_reduction
     """
     return await ai_pauli_network_synthesis(
         circuit=circuit,
