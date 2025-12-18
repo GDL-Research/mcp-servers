@@ -887,9 +887,7 @@ class TestHybridAITranspile:
         assert "optimization_level must be 1, 2, or 3" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_hybrid_ai_transpile_invalid_layout_mode(
-        self, mock_circuit_qasm, mock_backend
-    ):
+    async def test_hybrid_ai_transpile_invalid_layout_mode(self, mock_circuit_qasm, mock_backend):
         """
         Test hybrid AI transpilation with invalid ai_layout_mode returns error.
         """

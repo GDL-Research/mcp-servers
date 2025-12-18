@@ -360,7 +360,9 @@ async def hybrid_ai_transpile(
     elif optimization_level not in (1, 2, 3):
         validation_error = f"optimization_level must be 1, 2, or 3, got {optimization_level}"
     elif ai_layout_mode not in valid_layout_modes:
-        validation_error = f"ai_layout_mode must be one of {valid_layout_modes}, got '{ai_layout_mode}'"
+        validation_error = (
+            f"ai_layout_mode must be one of {valid_layout_modes}, got '{ai_layout_mode}'"
+        )
     if validation_error:
         return {"status": "error", "message": validation_error}
 
