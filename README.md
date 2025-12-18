@@ -23,7 +23,7 @@ This repository contains production-ready MCP servers that enable AI systems to 
 ### 🔬 Qiskit MCP Server
 **Core Qiskit quantum computing capabilities**
 
-Provides quantum circuit creation, manipulation, and serialization utilities (QASM3, QPY) for local quantum development
+Provides quantum circuit creation, manipulation, transpilation, and serialization utilities (QASM3, QPY) for local quantum development using [Qiskit](https://github.com/Qiskit/qiskit)
 
 **📁 Directory**: [`./qiskit-mcp-server/`](./qiskit-mcp-server/)
 
@@ -32,7 +32,7 @@ Provides quantum circuit creation, manipulation, and serialization utilities (QA
 ### 🧠 Qiskit Code Assistant MCP Server
 **Intelligent quantum code completion and assistance**
 
-Provides access to IBM's Qiskit Code Assistant AI for intelligent quantum programming
+Provides access to [IBM's Qiskit Code Assistant](https://quantum.cloud.ibm.com/docs/en/guides/qiskit-code-assistant) for AI-assisted quantum programming
 
 **📁 Directory**: [`./qiskit-code-assistant-mcp-server/`](./qiskit-code-assistant-mcp-server/)
 
@@ -41,7 +41,7 @@ Provides access to IBM's Qiskit Code Assistant AI for intelligent quantum progra
 ### ⚙️ Qiskit IBM Runtime MCP Server
 **Complete access to IBM Quantum cloud services**
 
-Comprehensive interface to IBM Quantum hardware via Qiskit IBM Runtime
+Comprehensive interface to IBM Quantum hardware via [Qiskit IBM Runtime](https://github.com/Qiskit/qiskit-ibm-runtime/)
 
 **📁 Directory**: [`./qiskit-ibm-runtime-mcp-server/`](./qiskit-ibm-runtime-mcp-server/)
 
@@ -50,7 +50,7 @@ Comprehensive interface to IBM Quantum hardware via Qiskit IBM Runtime
 ### 🚀 Qiskit IBM Transpiler MCP Server
 **AI-powered circuit transpilation**
 
-Access to IBM's cloud-based transpiler service with AI-optimized circuit routing and optimization
+Access to the [qiskit-ibm-transpiler](https://github.com/Qiskit/qiskit-ibm-transpiler) library for AI-optimized circuit routing and optimization.
 
 **📁 Directory**: [`./qiskit-ibm-transpiler-mcp-server/`](./qiskit-ibm-transpiler-mcp-server/)
 
