@@ -273,7 +273,7 @@ async def synthesize_linear_function(
         return {
             "status": "success",
             "circuit_qpy": _circuit_to_qpy(circuit),
-            "linear_function_shape": list(lf_array.shape),
+            "linear_function_shape": [int(x) for x in lf_array.shape],
             "metrics": metrics,
             "num_searches": num_searches,
             "note": "Use convert_qpy_to_qasm3 to view circuit in human-readable format",

@@ -269,7 +269,9 @@ def create_coupling_map_from_preset(preset: str) -> tuple[CouplingMap, list[list
         raise ValueError(f"Unknown topology in preset: {topology}")
 
     cmap = CouplingMap(couplinglist=edges)
-    return cmap, edges, num_qubits
+    # Ensure native Python types for JSON serialization
+    edges = [[int(e[0]), int(e[1])] for e in edges]
+    return cmap, edges, int(num_qubits)
 
 
 def create_coupling_map_from_edges(
@@ -298,9 +300,11 @@ def create_coupling_map_from_edges(
     for e in all_edges:
         all_qubits.add(e[0])
         all_qubits.add(e[1])
-    num_qubits = max(all_qubits) + 1 if all_qubits else 0
+    num_qubits = int(max(all_qubits) + 1) if all_qubits else 0
 
     cmap = CouplingMap(couplinglist=all_edges)
+    # Ensure native Python types for JSON serialization
+    all_edges = [[int(e[0]), int(e[1])] for e in all_edges]
     return cmap, all_edges, num_qubits
 
 

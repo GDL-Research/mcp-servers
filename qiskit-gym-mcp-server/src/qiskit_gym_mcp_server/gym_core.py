@@ -112,8 +112,8 @@ async def create_permutation_environment(
         # Create environment
         env = PermutationGym.from_coupling_map(cmap)
 
-        # Get environment info
-        action_space_size = env.action_space.n if hasattr(env.action_space, "n") else 0
+        # Get environment info (cast to int for JSON serialization)
+        action_space_size = int(env.action_space.n) if hasattr(env.action_space, "n") else 0
 
         # Register in state
         state = GymStateProvider()
@@ -192,8 +192,8 @@ async def create_linear_function_environment(
         else:
             env = LinearFunctionGym.from_coupling_map(cmap)
 
-        # Get environment info
-        action_space_size = env.action_space.n if hasattr(env.action_space, "n") else 0
+        # Get environment info (cast to int for JSON serialization)
+        action_space_size = int(env.action_space.n) if hasattr(env.action_space, "n") else 0
 
         # Register in state
         state = GymStateProvider()
@@ -347,8 +347,8 @@ async def create_clifford_environment(
         # Create environment
         env = CliffordGym(num_qubits=num_qubits, gateset=parsed_gateset)
 
-        # Get environment info
-        action_space_size = env.action_space.n if hasattr(env.action_space, "n") else 0
+        # Get environment info (cast to int for JSON serialization)
+        action_space_size = int(env.action_space.n) if hasattr(env.action_space, "n") else 0
 
         # Register in state
         state = GymStateProvider()
@@ -434,14 +434,16 @@ async def get_environment_info(env_id: str) -> dict[str, Any]:
             "message": f"Environment '{env_id}' not found. Use list_environments to see available environments.",
         }
 
-    # Get additional info from gym instance
+    # Get additional info from gym instance (cast to int for JSON serialization)
     action_space_size = 0
     observation_shape = None
     try:
         if hasattr(env.gym_instance, "action_space"):
-            action_space_size = getattr(env.gym_instance.action_space, "n", 0)
+            action_space_size = int(getattr(env.gym_instance.action_space, "n", 0))
         if hasattr(env.gym_instance, "observation_space"):
-            observation_shape = getattr(env.gym_instance.observation_space, "shape", None)
+            shape = getattr(env.gym_instance.observation_space, "shape", None)
+            if shape is not None:
+                observation_shape = tuple(int(x) for x in shape)
     except Exception:
         pass
 
