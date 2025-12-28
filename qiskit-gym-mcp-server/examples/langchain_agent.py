@@ -30,6 +30,7 @@ import argparse
 import asyncio
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
@@ -42,8 +43,9 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.tools import load_mcp_tools
 
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file (relative to this script's location)
+_script_dir = Path(__file__).parent
+load_dotenv(_script_dir / ".env")
 
 
 # System prompt for the qiskit-gym agent
@@ -194,13 +196,25 @@ def get_llm(provider: str, model: str | None = None) -> BaseChatModel:
 
 def get_mcp_client() -> MultiServerMCPClient:
     """Create and return an MCP client configured for the Qiskit Gym MCP server."""
+    # Pass relevant environment variables to the MCP server subprocess
+    server_env = {}
+    for key in [
+        "QISKIT_GYM_MODEL_DIR",
+        "QISKIT_GYM_TENSORBOARD_DIR",
+        "QISKIT_GYM_MAX_QUBITS",
+        "QISKIT_GYM_MAX_ITERATIONS",
+        "QISKIT_GYM_MAX_SEARCHES",
+    ]:
+        if key in os.environ:
+            server_env[key] = os.environ[key]
+
     return MultiServerMCPClient(
         {
             "qiskit-gym": {
                 "transport": "stdio",
                 "command": "qiskit-gym-mcp-server",
                 "args": [],
-                "env": {},
+                "env": server_env,
             }
         }
     )
