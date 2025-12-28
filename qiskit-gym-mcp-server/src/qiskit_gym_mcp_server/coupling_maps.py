@@ -738,7 +738,10 @@ def _get_fake_backend(backend_name: str) -> Any:
     """Get a fake backend instance by name.
 
     Args:
-        backend_name: Backend name (e.g., "ibm_fez", "ibm_brisbane")
+        backend_name: Backend name. Accepts multiple formats:
+            - "fake_fez" (exact match)
+            - "ibm_fez" (converts to fake_fez)
+            - "fez" (converts to fake_fez)
 
     Returns:
         Fake backend instance
@@ -751,16 +754,24 @@ def _get_fake_backend(backend_name: str) -> Any:
     provider = FakeProviderForBackendV2()
     available = [b.name for b in provider.backends()]
 
-    # Try exact match first
-    for backend in provider.backends():
-        if backend.name == backend_name:
-            return backend
+    # Normalize the backend name to try multiple formats
+    names_to_try = [backend_name]
 
-    # Try without ibm_ prefix
-    name_without_prefix = backend_name.replace("ibm_", "")
-    for backend in provider.backends():
-        if backend.name == name_without_prefix:
-            return backend
+    # If name starts with ibm_, try fake_ version
+    if backend_name.startswith("ibm_"):
+        base_name = backend_name[4:]  # Remove "ibm_"
+        names_to_try.append(f"fake_{base_name}")
+        names_to_try.append(base_name)
+
+    # If name doesn't have a prefix, try with fake_ prefix
+    if not backend_name.startswith("fake_") and not backend_name.startswith("ibm_"):
+        names_to_try.append(f"fake_{backend_name}")
+
+    # Try each name variant
+    for name in names_to_try:
+        for backend in provider.backends():
+            if backend.name == name:
+                return backend
 
     raise ValueError(
         f"Fake backend '{backend_name}' not found. Available: {', '.join(sorted(available))}"
