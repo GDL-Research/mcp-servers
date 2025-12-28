@@ -5,6 +5,7 @@ A Model Context Protocol (MCP) server that provides reinforcement learning-based
 ## Features
 
 - **Train RL Models**: Train reinforcement learning agents to synthesize optimal quantum circuits
+- **Background Training**: Run long training sessions in background threads with polling support
 - **Three Synthesis Types**:
   - **Permutation**: Qubit routing with minimal SWAP gates
   - **Linear Function**: CNOT synthesis for linear Boolean functions
@@ -78,6 +79,18 @@ AI Agent:
    - start_training_tool(env_id, algorithm="ppo", num_iterations=100)
 ```
 
+```
+User: "Train a model in the background so I can do other things"
+
+AI Agent:
+1. create_clifford_env_tool(num_qubits=6, preset="grid_2x3")  # -> env_id
+2. start_training_tool(env_id, algorithm="ppo", num_iterations=500, background=True)  # -> session_id (returns immediately)
+3. (User can now ask other questions or the agent can do other work)
+4. get_training_status_tool(session_id)  # -> check progress
+5. wait_for_training_tool(session_id, timeout=600)  # -> blocks until complete, returns model_id
+6. save_model_tool(session_id, model_name="clifford_6q_v1")
+```
+
 ## Tools Reference
 
 ### Environment Management
@@ -95,7 +108,8 @@ AI Agent:
 
 | Tool | Description |
 |------|-------------|
-| `start_training_tool` | Start RL training (PPO or AlphaZero) |
+| `start_training_tool` | Start RL training (PPO or AlphaZero), supports `background=True` |
+| `wait_for_training_tool` | Wait for background training to complete |
 | `batch_train_environments_tool` | Train multiple environments |
 | `get_training_status_tool` | Get training progress and metrics |
 | `stop_training_tool` | Stop a training session |
