@@ -65,6 +65,7 @@ members = [
     "qiskit-code-assistant-mcp-server",
     "qiskit-ibm-runtime-mcp-server",
     "qiskit-ibm-transpiler-mcp-server",
+    "qiskit-gym-mcp-server",
 ]
 
 # Source configuration for workspace dependencies
@@ -73,6 +74,7 @@ qiskit-mcp-server = { workspace = true }
 qiskit-code-assistant-mcp-server = { workspace = true }
 qiskit-ibm-runtime-mcp-server = { workspace = true }
 qiskit-ibm-transpiler-mcp-server = { workspace = true }
+qiskit-gym-mcp-server = { workspace = true }
 
 # Shared tool configurations
 [tool.ruff]
@@ -84,7 +86,7 @@ extend = "ruff.toml"
 # Note: mypy doesn't support extend in pyproject.toml, see mypy.ini
 
 [tool.pytest.ini_options]
-testpaths = ["qiskit-mcp-server/tests", "qiskit-code-assistant-mcp-server/tests", "qiskit-ibm-runtime-mcp-server/tests", "qiskit-ibm-transpiler-mcp-server/tests"]
+testpaths = ["qiskit-mcp-server/tests", "qiskit-code-assistant-mcp-server/tests", "qiskit-ibm-runtime-mcp-server/tests", "qiskit-ibm-transpiler-mcp-server/tests", "qiskit-gym-mcp-server/tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
@@ -110,6 +112,7 @@ source = [
     "qiskit-code-assistant-mcp-server/src",
     "qiskit-ibm-runtime-mcp-server/src",
     "qiskit-ibm-transpiler-mcp-server/src",
+    "qiskit-gym-mcp-server/src",
 ]
 omit = [
     "*/tests/*",
