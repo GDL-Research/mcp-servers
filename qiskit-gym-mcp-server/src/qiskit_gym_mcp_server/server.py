@@ -74,6 +74,7 @@ from qiskit_gym_mcp_server.training import (
     batch_train_environments,
     get_available_algorithms,
     get_available_policies,
+    get_training_metrics,
     get_training_status,
     list_training_sessions,
     start_training,
@@ -320,6 +321,32 @@ async def get_training_status_tool(session_id: str) -> dict[str, Any]:
         Dict with session status, progress, and metrics.
     """
     return await get_training_status(session_id)
+
+
+@mcp.tool()
+async def get_training_metrics_tool(session_id: str) -> dict[str, Any]:
+    """Get detailed training metrics from TensorBoard logs.
+
+    Returns the progression of difficulty, success rate, and reward
+    throughout training. Use this after training completes to understand
+    how well the model trained and what difficulty level it reached.
+
+    Args:
+        session_id: Training session ID
+
+    Returns:
+        Dict with:
+        - metrics: Full progression data (difficulty, success, reward by step)
+        - final_difficulty: The highest difficulty level reached
+        - final_success: The final success rate achieved
+        - final_success_percent: Success rate as percentage string
+
+    Example:
+        After training completes with session_id, call this to see:
+        - Did it reach high difficulty levels? (good generalization)
+        - Is success rate near 100%? (reliable synthesis)
+    """
+    return await get_training_metrics(session_id)
 
 
 @mcp.tool()

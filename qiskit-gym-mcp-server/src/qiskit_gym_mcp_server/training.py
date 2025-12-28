@@ -419,6 +419,118 @@ async def get_training_status(session_id: str) -> dict[str, Any]:
     return result
 
 
+def _read_tensorboard_metrics(tb_path: str) -> dict[str, Any]:
+    """Read training metrics from TensorBoard logs.
+
+    Args:
+        tb_path: Path to TensorBoard log directory
+
+    Returns:
+        Dict with metrics progression (difficulty, success, reward)
+    """
+    import struct
+
+    try:
+        from tensorboard.backend.event_processing import event_accumulator
+
+        ea = event_accumulator.EventAccumulator(tb_path)
+        ea.Reload()
+
+        tags = ea.Tags()
+        tensor_tags = tags.get("tensors", [])
+
+        metrics: dict[str, list[dict[str, Any]]] = {}
+
+        for tag in tensor_tags:
+            if tag.startswith("Benchmark/"):
+                metric_name = tag.split("/")[-1]  # e.g., "difficulty", "success", "reward"
+                events = ea.Tensors(tag)
+
+                values = []
+                for event in events:
+                    # Decode the tensor value (float32)
+                    if event.tensor_proto.tensor_content:
+                        val = struct.unpack("f", event.tensor_proto.tensor_content[:4])[0]
+                    elif event.tensor_proto.float_val:
+                        val = event.tensor_proto.float_val[0]
+                    else:
+                        continue
+
+                    values.append({"step": event.step, "value": round(val, 4)})
+
+                metrics[metric_name] = values
+
+        return metrics
+
+    except ImportError:
+        return {"error": "tensorboard package not installed"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@with_sync
+async def get_training_metrics(session_id: str) -> dict[str, Any]:
+    """Get detailed training metrics from TensorBoard logs.
+
+    Returns the progression of difficulty, success rate, and reward
+    throughout training. Use this to understand how well the model trained.
+
+    Args:
+        session_id: Training session ID
+
+    Returns:
+        Dict with metrics progression including:
+        - difficulty: List of {step, value} showing difficulty level reached
+        - success: List of {step, value} showing success rate at each step
+        - reward: List of {step, value} showing reward progression
+        - final_difficulty: The final difficulty level reached
+        - final_success: The final success rate achieved
+    """
+    state = GymStateProvider()
+    session = state.get_training_session(session_id)
+
+    if session is None:
+        return {
+            "status": "error",
+            "message": f"Training session '{session_id}' not found",
+        }
+
+    if not session.tensorboard_path:
+        return {
+            "status": "error",
+            "message": f"No TensorBoard logs found for session '{session_id}'",
+        }
+
+    # Read metrics from TensorBoard
+    metrics = _read_tensorboard_metrics(session.tensorboard_path)
+
+    if "error" in metrics:
+        return {
+            "status": "error",
+            "message": f"Failed to read TensorBoard logs: {metrics['error']}",
+        }
+
+    result: dict[str, Any] = {
+        "status": "success",
+        "session_id": session_id,
+        "tensorboard_path": session.tensorboard_path,
+        "metrics": metrics,
+    }
+
+    # Add final values for quick reference
+    if "difficulty" in metrics and metrics["difficulty"]:
+        result["final_difficulty"] = metrics["difficulty"][-1]["value"]
+
+    if "success" in metrics and metrics["success"]:
+        result["final_success"] = metrics["success"][-1]["value"]
+        result["final_success_percent"] = f"{metrics['success'][-1]['value']:.0%}"
+
+    if "reward" in metrics and metrics["reward"]:
+        result["final_reward"] = metrics["reward"][-1]["value"]
+
+    return result
+
+
 @with_sync
 async def wait_for_training(
     session_id: str,
