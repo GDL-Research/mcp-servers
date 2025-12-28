@@ -260,9 +260,13 @@ async def synthesize_linear_function(
             }
 
         # Synthesize circuit
+        # Convert numpy array to LinearFunction object (required by qiskit-gym synth)
+        from qiskit.circuit.library import LinearFunction
+
+        linear_func = LinearFunction(lf_array)
         logger.info(f"Synthesizing linear function with {num_searches} searches")
         circuit = model.rls_instance.synth(
-            lf_array,
+            linear_func,
             num_searches=num_searches,
             deterministic=deterministic,
         )
