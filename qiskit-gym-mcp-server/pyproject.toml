@@ -13,6 +13,7 @@ dependencies = [
     "qiskit-mcp-server",
     "pydantic>=2.0.0",
     "qiskit-ibm-runtime>=0.34.0",  # For fake backends (exact IBM topologies without credentials)
+    "twisterl<0.3.0",  # Pin to avoid SIGBUS crash on macOS ARM64 (https://github.com/AI4quantum/qiskit-gym/issues/11)
 ]
 
 [tool.uv.sources]
