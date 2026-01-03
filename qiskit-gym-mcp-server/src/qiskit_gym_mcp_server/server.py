@@ -74,8 +74,10 @@ from qiskit_gym_mcp_server.training import (
     batch_train_environments,
     get_available_algorithms,
     get_available_policies,
+    get_tensorboard_metrics,
     get_training_metrics,
     get_training_status,
+    list_tensorboard_experiments,
     list_training_sessions,
     start_training,
     stop_training,
@@ -396,6 +398,49 @@ async def list_training_sessions_tool() -> dict[str, Any]:
         Dict with list of training sessions.
     """
     return await list_training_sessions()
+
+
+@mcp.tool()
+async def list_tensorboard_experiments_tool() -> dict[str, Any]:
+    """List available TensorBoard experiments from past training runs.
+
+    Returns a list of experiment names that can be used with
+    get_tensorboard_metrics_tool to view historical training metrics.
+
+    Returns:
+        Dict with list of experiment names (newest first).
+    """
+    return await list_tensorboard_experiments()
+
+
+@mcp.tool()
+async def get_tensorboard_metrics_tool(
+    experiment_name: str | None = None,
+    tensorboard_path: str | None = None,
+) -> dict[str, Any]:
+    """Get training metrics from TensorBoard logs for historical runs.
+
+    Use this to read metrics from past training runs that are no longer
+    in the active session list. Use list_tensorboard_experiments_tool to
+    see available experiments.
+
+    Args:
+        experiment_name: Name of the TensorBoard experiment
+            (e.g., "linear_function_train_0001_abc123").
+        tensorboard_path: Direct path to TensorBoard logs (alternative to name).
+
+    Returns:
+        Dict with metrics progression (difficulty, success, reward by step)
+        and final values.
+
+    Example:
+        1. list_tensorboard_experiments_tool() -> see available experiments
+        2. get_tensorboard_metrics_tool(experiment_name="linear_function_...") -> metrics
+    """
+    return await get_tensorboard_metrics(
+        experiment_name=experiment_name,
+        tensorboard_path=tensorboard_path,
+    )
 
 
 # ============================================================================

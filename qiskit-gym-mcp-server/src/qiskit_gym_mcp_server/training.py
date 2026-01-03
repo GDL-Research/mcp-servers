@@ -537,6 +537,146 @@ async def get_training_metrics(session_id: str) -> dict[str, Any]:
 
 
 @with_sync
+async def get_tensorboard_metrics(
+    experiment_name: str | None = None,
+    tensorboard_path: str | None = None,
+) -> dict[str, Any]:
+    """Get training metrics from TensorBoard logs for historical runs.
+
+    Use this to read metrics from past training runs that are no longer
+    in the active session list. Provide either an experiment name or
+    a direct path to the TensorBoard logs.
+
+    Args:
+        experiment_name: Name of the TensorBoard experiment (e.g., "linear_function_train_0001_abc123").
+            Will look in the default TensorBoard directory.
+        tensorboard_path: Direct path to TensorBoard log directory.
+            Use this for custom locations.
+
+    Returns:
+        Dict with metrics progression including:
+        - difficulty: List of {step, value} showing difficulty level reached
+        - success: List of {step, value} showing success rate at each step
+        - reward: List of {step, value} showing reward progression
+        - final_difficulty: The final difficulty level reached
+        - final_success: The final success rate achieved
+    """
+    import os
+
+    if experiment_name is None and tensorboard_path is None:
+        return {
+            "status": "error",
+            "message": "Must provide either 'experiment_name' or 'tensorboard_path'",
+        }
+
+    if experiment_name is not None and tensorboard_path is not None:
+        return {
+            "status": "error",
+            "message": "Provide either 'experiment_name' or 'tensorboard_path', not both",
+        }
+
+    # Resolve the TensorBoard path
+    if experiment_name is not None:
+        tb_path = os.path.join(QISKIT_GYM_TENSORBOARD_DIR, experiment_name)
+        if not os.path.exists(tb_path):
+            # List available experiments
+            available = []
+            if os.path.exists(QISKIT_GYM_TENSORBOARD_DIR):
+                available = sorted(os.listdir(QISKIT_GYM_TENSORBOARD_DIR))[:10]
+            return {
+                "status": "error",
+                "message": f"Experiment '{experiment_name}' not found in {QISKIT_GYM_TENSORBOARD_DIR}",
+                "available_experiments": available,
+                "hint": "Use list format like 'linear_function_train_0001_abc123'",
+            }
+    else:
+        tb_path = tensorboard_path
+        if not os.path.exists(tb_path):
+            return {
+                "status": "error",
+                "message": f"TensorBoard path not found: {tb_path}",
+            }
+
+    # Read metrics from TensorBoard
+    metrics = _read_tensorboard_metrics(tb_path)
+
+    if "error" in metrics:
+        return {
+            "status": "error",
+            "message": f"Failed to read TensorBoard logs: {metrics['error']}",
+        }
+
+    result: dict[str, Any] = {
+        "status": "success",
+        "tensorboard_path": tb_path,
+        "metrics": metrics,
+    }
+
+    if experiment_name:
+        result["experiment_name"] = experiment_name
+
+    # Add final values for quick reference
+    if "difficulty" in metrics and metrics["difficulty"]:
+        result["final_difficulty"] = metrics["difficulty"][-1]["value"]
+
+    if "success" in metrics and metrics["success"]:
+        result["final_success"] = metrics["success"][-1]["value"]
+        result["final_success_percent"] = f"{metrics['success'][-1]['value']:.0%}"
+
+    if "reward" in metrics and metrics["reward"]:
+        result["final_reward"] = metrics["reward"][-1]["value"]
+
+    return result
+
+
+@with_sync
+async def list_tensorboard_experiments() -> dict[str, Any]:
+    """List available TensorBoard experiments.
+
+    Returns a list of experiment names that can be used with
+    get_tensorboard_metrics to view historical training metrics.
+
+    Returns:
+        Dict with list of experiment names and their paths.
+    """
+    import os
+
+    if not os.path.exists(QISKIT_GYM_TENSORBOARD_DIR):
+        return {
+            "status": "success",
+            "experiments": [],
+            "total": 0,
+            "tensorboard_dir": QISKIT_GYM_TENSORBOARD_DIR,
+        }
+
+    experiments = []
+    for name in sorted(os.listdir(QISKIT_GYM_TENSORBOARD_DIR)):
+        exp_path = os.path.join(QISKIT_GYM_TENSORBOARD_DIR, name)
+        if os.path.isdir(exp_path):
+            # Get modification time for sorting
+            mtime = os.path.getmtime(exp_path)
+            experiments.append({
+                "name": name,
+                "path": exp_path,
+                "modified": mtime,
+            })
+
+    # Sort by modification time (newest first)
+    experiments.sort(key=lambda x: x["modified"], reverse=True)
+
+    # Remove mtime from output (just used for sorting)
+    for exp in experiments:
+        del exp["modified"]
+
+    return {
+        "status": "success",
+        "experiments": experiments,
+        "total": len(experiments),
+        "tensorboard_dir": QISKIT_GYM_TENSORBOARD_DIR,
+    }
+
+
+@with_sync
 async def wait_for_training(
     session_id: str,
     timeout: int = 600,
