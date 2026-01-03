@@ -125,6 +125,63 @@ class TestTrainingStatus:
         assert result["status"] == "error"
         assert "not found" in result["message"]
 
+    @pytest.mark.asyncio
+    async def test_get_training_status_progress_from_tensorboard(
+        self,
+        mock_permutation_gym,
+        mock_rls_synthesis,
+        mock_ppo_config,
+        mock_basic_policy_config,
+        mocker,
+    ):
+        """Test that progress is calculated from TensorBoard steps during training."""
+        from qiskit_gym_mcp_server.state import GymStateProvider
+
+        env_result = await create_permutation_environment(preset="linear_5")
+        env_id = env_result["env_id"]
+
+        train_result = await start_training(
+            env_id=env_id,
+            num_iterations=10000,
+        )
+        session_id = train_result["session_id"]
+
+        # Simulate in-progress training: reset session.progress to 0
+        # (normally this would be 0 during training until completion)
+        state = GymStateProvider()
+        session = state.get_training_session(session_id)
+        session.progress = 0  # Simulate not yet updated
+        session.status = "running"  # Simulate still running
+
+        # Mock TensorBoard metrics with step data showing actual progress
+        mock_metrics = {
+            "difficulty": [
+                {"step": 0, "value": 1.0},
+                {"step": 500, "value": 128.0},
+                {"step": 2500, "value": 256.0},  # Latest step is 2500
+            ],
+            "success": [
+                {"step": 0, "value": 0.5},
+                {"step": 500, "value": 0.9},
+                {"step": 2500, "value": 1.0},
+            ],
+        }
+        mocker.patch(
+            "qiskit_gym_mcp_server.training._read_tensorboard_metrics",
+            return_value=mock_metrics,
+        )
+
+        status_result = await get_training_status(session_id)
+
+        assert status_result["status"] == "success"
+        assert status_result["training_status"] == "running"
+        # Progress should be 2500 (from TensorBoard step), not 0 (from session.progress)
+        assert status_result["progress"] == 2500
+        # Progress percent should be 25% (2500 / 10000)
+        assert status_result["progress_percent"] == 25.0
+        assert status_result["current_difficulty"] == 256.0
+        assert status_result["current_success"] == 1.0
+
 
 class TestStopTraining:
     """Tests for stopping training sessions."""

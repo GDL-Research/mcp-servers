@@ -402,6 +402,33 @@ async def get_training_status(session_id: str) -> dict[str, Any]:
             "message": f"Training session '{session_id}' not found",
         }
 
+    # Get progress from session (only updated at completion)
+    progress = session.progress
+    current_step = 0
+
+    # Try to get live progress from TensorBoard metrics
+    tb_metrics: dict[str, Any] = {}
+    if session.tensorboard_path:
+        tb_metrics = _read_tensorboard_metrics(session.tensorboard_path)
+        if "error" not in tb_metrics:
+            # Get the current step from any available metric
+            for metric_name in ["difficulty", "success", "reward"]:
+                if metric_name in tb_metrics and tb_metrics[metric_name]:
+                    latest_step = tb_metrics[metric_name][-1]["step"]
+                    if latest_step > current_step:
+                        current_step = latest_step
+
+            # Use TensorBoard step as progress if it's more current
+            if current_step > progress:
+                progress = current_step
+
+    # Calculate progress percentage
+    progress_percent = (
+        round(100 * progress / session.total_iterations, 1)
+        if session.total_iterations > 0
+        else 0
+    )
+
     result = {
         "status": "success",
         "session_id": session.session_id,
@@ -409,11 +436,9 @@ async def get_training_status(session_id: str) -> dict[str, Any]:
         "algorithm": session.algorithm,
         "policy": session.policy,
         "training_status": session.status,
-        "progress": session.progress,
+        "progress": progress,
         "total_iterations": session.total_iterations,
-        "progress_percent": round(100 * session.progress / session.total_iterations, 1)
-        if session.total_iterations > 0
-        else 0,
+        "progress_percent": progress_percent,
         "metrics": session.metrics,
         "tensorboard_path": session.tensorboard_path,
         "error_message": session.error_message,
@@ -424,16 +449,14 @@ async def get_training_status(session_id: str) -> dict[str, Any]:
         result["model_id"] = session.model_id
 
     # Include live metrics from TensorBoard if available
-    if session.tensorboard_path:
-        tb_metrics = _read_tensorboard_metrics(session.tensorboard_path)
-        if "error" not in tb_metrics:
-            if "difficulty" in tb_metrics and tb_metrics["difficulty"]:
-                result["current_difficulty"] = tb_metrics["difficulty"][-1]["value"]
-            if "success" in tb_metrics and tb_metrics["success"]:
-                result["current_success"] = tb_metrics["success"][-1]["value"]
-                result["current_success_percent"] = f"{tb_metrics['success'][-1]['value']:.0%}"
-            if "reward" in tb_metrics and tb_metrics["reward"]:
-                result["current_reward"] = tb_metrics["reward"][-1]["value"]
+    if "error" not in tb_metrics:
+        if "difficulty" in tb_metrics and tb_metrics["difficulty"]:
+            result["current_difficulty"] = tb_metrics["difficulty"][-1]["value"]
+        if "success" in tb_metrics and tb_metrics["success"]:
+            result["current_success"] = tb_metrics["success"][-1]["value"]
+            result["current_success_percent"] = f"{tb_metrics['success'][-1]['value']:.0%}"
+        if "reward" in tb_metrics and tb_metrics["reward"]:
+            result["current_reward"] = tb_metrics["reward"][-1]["value"]
 
     return result
 
