@@ -49,7 +49,7 @@ The agent can:
 | OpenAI-compatible | `langchain-openai` | granite-qiskit | Yes (`OPENAI_COMPATIBLE_BASE_URL`) |
 | OpenAI-completions | `langchain-openai` | granite-qiskit | Yes (`OPENAI_COMPATIBLE_BASE_URL`)* |
 
-*Note: The `openai-completions` provider uses the legacy `/completions` endpoint which does not support native tool calling. Agent functionality may be limited.
+> **Note:** The `openai-completions` provider uses the legacy `/completions` endpoint which does not support native tool calling. Agent functionality may be limited.
 
 ### Architecture
 
