@@ -205,13 +205,30 @@ async def accept_model_disclaimer(model_id: str, disclaimer_id: str) -> dict[str
 @with_sync
 async def get_completion(prompt: str) -> dict[str, Any]:
     """
-    Get completion for writing, completing, and optimizing quantum code using Qiskit.
+    Get code completion for writing, completing, and optimizing quantum code using Qiskit.
+
+    This tool generates Qiskit Python code based on the given prompt. Use it when users
+    want to create quantum circuits, algorithms, or any Qiskit-related code.
 
     Args:
-        prompt: The prompt for code completion
+        prompt: Natural language description of what code to generate. Be specific about:
+                - What quantum circuit or algorithm to create
+                - Number of qubits if relevant
+                - Any specific gates or operations needed
 
     Returns:
-        Code completion choices and metadata
+        Dictionary with:
+        - status: 'success' or 'error'
+        - code: The generated Python/Qiskit code (primary output - display this to user)
+        - completion_id: ID for accepting/tracking this completion
+        - message: Error description if status is 'error'
+
+    Example successful response:
+        {
+            "status": "success",
+            "code": "from qiskit import QuantumCircuit\\n\\nqc = QuantumCircuit(2)\\nqc.h(0)\\nqc.cx(0, 1)",
+            "completion_id": "cmpl_abc123"
+        }
     """
     if not prompt or not prompt.strip():
         return {"status": "error", "message": "prompt is required and cannot be empty"}
@@ -239,13 +256,15 @@ async def get_completion(prompt: str) -> dict[str, Any]:
             logger.warning("No choices returned for completion request")
             return {"status": "error", "message": "No choices for this prompt."}
         else:
+            # Extract the primary code from the first choice for easy LLM access
+            primary_code = choices[0].get("text", "") if choices else ""
             logger.info(
                 f"Successfully generated completion with {len(choices)} choices (ID: {completion_id})"
             )
             return {
                 "status": "success",
+                "code": primary_code,
                 "completion_id": completion_id,
-                "choices": choices,
             }
     except Exception as e:
         logger.error(f"Exception in get_completion: {e!s}")
@@ -255,13 +274,35 @@ async def get_completion(prompt: str) -> dict[str, Any]:
 @with_sync
 async def get_rag_completion(prompt: str) -> dict[str, Any]:
     """
-    Get RAG completion for answering conceptual or descriptive questions about Qiskit or Quantum.
+    Get RAG (Retrieval-Augmented Generation) completion for answering questions about
+    Qiskit and quantum computing concepts.
+
+    This tool uses IBM's knowledge base to answer conceptual questions. Use it when users
+    ask about quantum computing theory, Qiskit features, best practices, or need explanations
+    rather than code generation.
+
+    When to use this vs get_completion:
+    - Use get_rag_completion for: "What is entanglement?", "How does the transpiler work?"
+    - Use get_completion for: "Write a Bell state circuit", "Generate VQE code"
 
     Args:
-        prompt: The prompt for RAG-based completion
+        prompt: A question about Qiskit or quantum computing concepts.
+                Examples: "What are the different types of quantum gates?"
+                         "How do I optimize circuit depth?"
 
     Returns:
-        RAG completion choices and metadata
+        Dictionary with:
+        - status: 'success' or 'error'
+        - answer: The explanatory text response (primary output - display this to user)
+        - completion_id: ID for accepting/tracking this completion
+        - message: Error description if status is 'error'
+
+    Example successful response:
+        {
+            "status": "success",
+            "answer": "Quantum entanglement is a phenomenon where two qubits...",
+            "completion_id": "cmpl_xyz789"
+        }
     """
     try:
         url = f"{QCA_TOOL_API_BASE}/v1/completions"
@@ -275,10 +316,12 @@ async def get_rag_completion(prompt: str) -> dict[str, Any]:
         if not choices:
             return {"status": "error", "message": "No choices for this prompt."}
         else:
+            # Extract the primary answer from the first choice for easy LLM access
+            primary_answer = choices[0].get("text", "") if choices else ""
             return {
                 "status": "success",
+                "answer": primary_answer,
                 "completion_id": data.get("id"),
-                "choices": choices,
             }
     except Exception as e:
         return {"status": "error", "message": f"Failed to get RAG completion: {e!s}"}
