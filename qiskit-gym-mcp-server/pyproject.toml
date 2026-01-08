@@ -7,13 +7,12 @@ requires-python = ">=3.10,<3.14"
 
 dependencies = [
     "fastmcp>=2.12.4",
-    "qiskit-gym>=0.1.0",
+    "qiskit-gym>=0.2.0",
     "qiskit>=1.3.0",
     "nest-asyncio>=1.5.0",
     "qiskit-mcp-server",
     "pydantic>=2.0.0",
     "qiskit-ibm-runtime>=0.34.0",  # For fake backends (exact IBM topologies without credentials)
-    "twisterl<0.3.0",  # Pin to avoid SIGBUS crash on macOS ARM64 (https://github.com/AI4quantum/qiskit-gym/issues/11)
 ]
 
 [tool.uv.sources]
@@ -35,11 +34,9 @@ test = [
 
 examples = [
     "langchain>=0.3.0",
+    "langchain-anthropic>=0.3.0",
     "langchain-mcp-adapters>=0.1.0",
     "python-dotenv>=1.0.0",
-    # LLM providers (install the one you need):
-    # langchain-openai, langchain-anthropic, langchain-google-genai,
-    # langchain-ollama, langchain-ibm
 ]
 
 all = [
@@ -96,6 +93,12 @@ test = [
     "pytest-asyncio>=1.2.0",
     "pytest-mock>=3.15.1",
     "pytest-cov>=4.1.0",
+]
+examples = [
+    "langchain>=0.3.0",
+    "langchain-anthropic>=0.3.0",
+    "langchain-mcp-adapters>=0.1.0",
+    "python-dotenv>=1.0.0",
 ]
 
 # Bandit security configuration
