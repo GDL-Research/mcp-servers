@@ -144,7 +144,7 @@ async def get_model(model_id: str) -> dict[str, Any]:
             logger.info(f"Successfully retrieved model {model_id}")
             return {"status": "success", "model": data}
     except Exception as e:
-        logger.error(f"Exception in qca_get_model for {model_id}: {e!s}")
+        logger.error(f"Exception in get_model for {model_id}: {e!s}")
         return {"status": "error", "message": f"Failed to get model: {e!s}"}
 
 
@@ -248,7 +248,7 @@ async def get_completion(prompt: str) -> dict[str, Any]:
                 "choices": choices,
             }
     except Exception as e:
-        logger.error(f"Exception in qca_get_completion: {e!s}")
+        logger.error(f"Exception in get_completion: {e!s}")
         return {"status": "error", "message": f"Failed to get completion: {e!s}"}
 
 
