@@ -1071,41 +1071,43 @@ def _score_qv_subgraph(
                     )
         return total_error
 
-    elif metric == "qv_optimized":
-        # Balanced: connectivity + gate errors + readout errors
-        # Weight connectivity heavily since it's crucial for QV
-        connectivity_score = (max_edges - internal_edges) * 0.5 + avg_path_length * 0.3
+    # metric == "qv_optimized"
+    # Balanced: connectivity + gate errors + readout errors
+    # Weight connectivity heavily since it's crucial for QV
+    connectivity_score = (max_edges - internal_edges) * 0.5 + avg_path_length * 0.3
 
-        # Gate errors on internal edges
-        gate_error_sum = 0.0
-        for qubit in subgraph:
-            for neighbor in adjacency_list.get(str(qubit), []):
-                if neighbor in subgraph and neighbor > qubit:
-                    edge = (qubit, neighbor)
-                    reverse_edge = (neighbor, qubit)
-                    gate_error_sum += gate_errors.get(
-                        edge, gate_errors.get(reverse_edge, 0.01)
-                    )
+    # Gate errors on internal edges
+    gate_error_sum = 0.0
+    for qubit in subgraph:
+        for neighbor in adjacency_list.get(str(qubit), []):
+            if neighbor in subgraph and neighbor > qubit:
+                edge = (qubit, neighbor)
+                reverse_edge = (neighbor, qubit)
+                gate_error_sum += gate_errors.get(
+                    edge, gate_errors.get(reverse_edge, 0.01)
+                )
 
-        # Readout errors
-        readout_sum = sum(
+    # Readout errors
+    readout_sum = float(
+        sum(
             qubit_calibration.get(q, {}).get("readout_error", 0.01) for q in subgraph
         )
+    )
 
-        # Coherence factor (inverse of T1 average, penalize low coherence)
-        coherence_penalty = sum(
+    # Coherence factor (inverse of T1 average, penalize low coherence)
+    coherence_penalty = float(
+        sum(
             1.0 / max(qubit_calibration.get(q, {}).get("t1_us", 100), 1)
             for q in subgraph
         )
+    )
 
-        return (
-            connectivity_score
-            + gate_error_sum * 10
-            + readout_sum
-            + coherence_penalty * 0.01
-        )
-
-    return 0.0
+    return (
+        connectivity_score
+        + gate_error_sum * 10
+        + readout_sum
+        + coherence_penalty * 0.01
+    )
 
 
 def _build_qv_subgraph_result(
