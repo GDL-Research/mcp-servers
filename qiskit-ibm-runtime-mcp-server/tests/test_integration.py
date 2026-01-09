@@ -30,11 +30,15 @@ class TestMCPServerIntegration:
         assert mcp.name == "Qiskit IBM Runtime"
 
     @pytest.mark.asyncio
-    async def test_service_initialization_flow(self, mock_env_vars, mock_runtime_service):
+    async def test_service_initialization_flow(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test service initialization flow."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import initialize_service
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService") as mock_qrs:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService"
+        ) as mock_qrs:
             mock_qrs.return_value = mock_runtime_service
 
             service = initialize_service()
@@ -46,14 +50,18 @@ class TestToolIntegration:
     """Test MCP tool integration."""
 
     @pytest.mark.asyncio
-    async def test_setup_and_list_backends_workflow(self, mock_env_vars, mock_runtime_service):
+    async def test_setup_and_list_backends_workflow(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test setup account -> list backends workflow."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
             list_backends,
             setup_ibm_quantum_account,
         )
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             # 1. Setup account
@@ -75,8 +83,12 @@ class TestToolIntegration:
         )
 
         with (
-            patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init,
-            patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy") as mock_least_busy,
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+            ) as mock_init,
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy"
+            ) as mock_least_busy,
         ):
             mock_init.return_value = mock_runtime_service
 
@@ -111,7 +123,9 @@ class TestToolIntegration:
             list_my_jobs,
         )
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service):
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service
+        ):
             # 1. List jobs
             jobs_result = await list_my_jobs(5)
             assert jobs_result["status"] == "success"
@@ -136,7 +150,9 @@ class TestCouplingMapTool:
         """Test getting coupling map for a backend."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import get_coupling_map
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             # Mock backend with coupling map
@@ -170,11 +186,15 @@ class TestCouplingMapTool:
             assert result["adjacency_list"]["1"] == [0, 2]
 
     @pytest.mark.asyncio
-    async def test_get_coupling_map_unidirectional(self, mock_env_vars, mock_runtime_service):
+    async def test_get_coupling_map_unidirectional(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test coupling map with unidirectional edges."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import get_coupling_map
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             mock_backend = Mock()
@@ -195,7 +215,9 @@ class TestCouplingMapTool:
         """Test coupling map with backend error."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import get_coupling_map
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
             mock_runtime_service.backend.side_effect = Exception("Backend not found")
 
@@ -254,7 +276,9 @@ class TestCouplingMapTool:
             has_nighthawk = False
 
         if not has_nighthawk:
-            pytest.skip("FakeNighthawk not available (requires qiskit-ibm-runtime >= 0.44.0)")
+            pytest.skip(
+                "FakeNighthawk not available (requires qiskit-ibm-runtime >= 0.44.0)"
+            )
 
         result = await get_coupling_map("fake_nighthawk")
 
@@ -272,11 +296,15 @@ class TestOptimalQubitChainsTool:
     """Test optimal qubit chains tool functionality."""
 
     @pytest.mark.asyncio
-    async def test_find_optimal_chains_success(self, mock_env_vars, mock_runtime_service):
+    async def test_find_optimal_chains_success(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test finding optimal chains successfully."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qubit_chains
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             # Mock backend with coupling map
@@ -309,7 +337,9 @@ class TestOptimalQubitChainsTool:
 
             mock_runtime_service.backend.return_value = mock_backend
 
-            result = await find_optimal_qubit_chains("ibm_test", chain_length=3, num_results=3)
+            result = await find_optimal_qubit_chains(
+                "ibm_test", chain_length=3, num_results=3
+            )
 
             assert result["status"] == "success"
             assert result["backend_name"] == "ibm_test"
@@ -323,11 +353,15 @@ class TestOptimalQubitChainsTool:
             assert "edge_errors" in result["chains"][0]
 
     @pytest.mark.asyncio
-    async def test_find_optimal_chains_no_valid_chains(self, mock_env_vars, mock_runtime_service):
+    async def test_find_optimal_chains_no_valid_chains(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test when no valid chains exist."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qubit_chains
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             # Mock backend with disconnected qubits (no chains possible)
@@ -357,7 +391,9 @@ class TestOptimalQubitChainsTool:
         """Test that faulty qubits are excluded from chains."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qubit_chains
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             mock_backend = Mock()
@@ -402,11 +438,15 @@ class TestOptimalQubitChainsTool:
                 assert 2 not in chain["qubits"]
 
     @pytest.mark.asyncio
-    async def test_find_optimal_chains_different_metrics(self, mock_env_vars, mock_runtime_service):
+    async def test_find_optimal_chains_different_metrics(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test different scoring metrics."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qubit_chains
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             mock_backend = Mock()
@@ -438,7 +478,9 @@ class TestOptimalQubitChainsTool:
 
             # Test each metric
             for metric in ["two_qubit_error", "readout_error", "combined"]:
-                result = await find_optimal_qubit_chains("ibm_test", chain_length=3, metric=metric)
+                result = await find_optimal_qubit_chains(
+                    "ibm_test", chain_length=3, metric=metric
+                )
 
                 assert result["status"] == "success"
                 assert result["metric"] == metric
@@ -451,7 +493,9 @@ class TestOptimalQubitChainsTool:
         """Test error when backend has no calibration data."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qubit_chains
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             mock_backend = Mock()
@@ -471,6 +515,283 @@ class TestOptimalQubitChainsTool:
             assert "calibration" in result["message"].lower()
 
 
+class TestOptimalQVQubitsTool:
+    """Test optimal QV qubits tool functionality."""
+
+    @pytest.mark.asyncio
+    async def test_find_optimal_qv_qubits_success(
+        self, mock_env_vars, mock_runtime_service
+    ):
+        """Test finding optimal QV qubits successfully."""
+        from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qv_qubits
+
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
+            mock_init.return_value = mock_runtime_service
+
+            # Mock backend with a more connected coupling map (triangle + extra)
+            mock_backend = Mock()
+            mock_backend.name = "ibm_test"
+            mock_backend.num_qubits = 5
+
+            # Create a coupling map with good connectivity:
+            # 0 - 1 - 2
+            # |   |
+            # 3 - 4
+            mock_config = Mock()
+            mock_config.coupling_map = [
+                [0, 1],
+                [1, 0],
+                [1, 2],
+                [2, 1],
+                [0, 3],
+                [3, 0],
+                [1, 4],
+                [4, 1],
+                [3, 4],
+                [4, 3],
+            ]
+            mock_backend.configuration.return_value = mock_config
+
+            # Mock properties with calibration data
+            mock_properties = Mock()
+            mock_properties.faulty_qubits.return_value = []
+            mock_properties.t1.return_value = 100e-6
+            mock_properties.t2.return_value = 50e-6
+            mock_properties.readout_error.return_value = 0.01
+            mock_properties.gate_error.return_value = 0.005
+            mock_backend.properties.return_value = mock_properties
+
+            mock_runtime_service.backend.return_value = mock_backend
+
+            result = await find_optimal_qv_qubits(
+                "ibm_test", num_qubits=3, num_results=3
+            )
+
+            assert result["status"] == "success"
+            assert result["backend_name"] == "ibm_test"
+            assert result["num_qubits"] == 3
+            assert result["metric"] == "qv_optimized"
+            assert result["total_subgraphs_found"] > 0
+            assert len(result["subgraphs"]) <= 3
+            assert result["subgraphs"][0]["rank"] == 1
+            assert len(result["subgraphs"][0]["qubits"]) == 3
+            assert "internal_edges" in result["subgraphs"][0]
+            assert "connectivity_ratio" in result["subgraphs"][0]
+            assert "average_path_length" in result["subgraphs"][0]
+            assert "qubit_details" in result["subgraphs"][0]
+            assert "edge_errors" in result["subgraphs"][0]
+
+    @pytest.mark.asyncio
+    async def test_find_optimal_qv_qubits_no_valid_subgraphs(
+        self, mock_env_vars, mock_runtime_service
+    ):
+        """Test when no valid subgraphs exist."""
+        from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qv_qubits
+
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
+            mock_init.return_value = mock_runtime_service
+
+            # Mock backend with disconnected qubits
+            mock_backend = Mock()
+            mock_backend.name = "ibm_test"
+            mock_backend.num_qubits = 3
+
+            mock_config = Mock()
+            mock_config.coupling_map = []  # No connections
+            mock_backend.configuration.return_value = mock_config
+
+            mock_properties = Mock()
+            mock_properties.faulty_qubits.return_value = []
+            # Mock calibration methods for sorting
+            mock_properties.readout_error.return_value = 0.01
+            mock_properties.t1.return_value = 100e-6
+            mock_properties.t2.return_value = 50e-6
+            mock_properties.frequency.return_value = 5.0e9
+            mock_properties.gate_error.return_value = 0.01
+            mock_backend.properties.return_value = mock_properties
+
+            mock_runtime_service.backend.return_value = mock_backend
+
+            result = await find_optimal_qv_qubits("ibm_test", num_qubits=3)
+
+            assert result["status"] == "error"
+            assert "No valid connected subgraphs" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_find_optimal_qv_qubits_excludes_faulty_qubits(
+        self, mock_env_vars, mock_runtime_service
+    ):
+        """Test that faulty qubits are excluded from subgraphs."""
+        from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qv_qubits
+
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
+            mock_init.return_value = mock_runtime_service
+
+            mock_backend = Mock()
+            mock_backend.name = "ibm_test"
+            mock_backend.num_qubits = 5
+
+            # Well-connected topology
+            mock_config = Mock()
+            mock_config.coupling_map = [
+                [0, 1],
+                [1, 0],
+                [1, 2],
+                [2, 1],
+                [0, 3],
+                [3, 0],
+                [1, 4],
+                [4, 1],
+                [3, 4],
+                [4, 3],
+            ]
+            mock_backend.configuration.return_value = mock_config
+
+            mock_properties = Mock()
+            mock_properties.faulty_qubits.return_value = [1]  # Qubit 1 is faulty
+            mock_properties.t1.return_value = 100e-6
+            mock_properties.t2.return_value = 50e-6
+            mock_properties.readout_error.return_value = 0.01
+            mock_properties.gate_error.return_value = 0.005
+            mock_backend.properties.return_value = mock_properties
+
+            mock_runtime_service.backend.return_value = mock_backend
+
+            result = await find_optimal_qv_qubits("ibm_test", num_qubits=3)
+
+            assert result["status"] == "success"
+            assert 1 in result["faulty_qubits"]
+            # Verify no subgraph contains the faulty qubit
+            for subgraph in result["subgraphs"]:
+                assert 1 not in subgraph["qubits"]
+
+    @pytest.mark.asyncio
+    async def test_find_optimal_qv_qubits_different_metrics(
+        self, mock_env_vars, mock_runtime_service
+    ):
+        """Test different scoring metrics."""
+        from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qv_qubits
+
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
+            mock_init.return_value = mock_runtime_service
+
+            mock_backend = Mock()
+            mock_backend.name = "ibm_test"
+            mock_backend.num_qubits = 5
+
+            mock_config = Mock()
+            mock_config.coupling_map = [
+                [0, 1],
+                [1, 0],
+                [1, 2],
+                [2, 1],
+                [0, 3],
+                [3, 0],
+                [1, 4],
+                [4, 1],
+                [3, 4],
+                [4, 3],
+            ]
+            mock_backend.configuration.return_value = mock_config
+
+            mock_properties = Mock()
+            mock_properties.faulty_qubits.return_value = []
+            mock_properties.t1.return_value = 100e-6
+            mock_properties.t2.return_value = 50e-6
+            mock_properties.readout_error.return_value = 0.01
+            mock_properties.gate_error.return_value = 0.005
+            mock_backend.properties.return_value = mock_properties
+
+            mock_runtime_service.backend.return_value = mock_backend
+
+            # Test each metric
+            for metric in ["qv_optimized", "connectivity", "gate_error"]:
+                result = await find_optimal_qv_qubits(
+                    "ibm_test", num_qubits=3, metric=metric
+                )
+
+                assert result["status"] == "success"
+                assert result["metric"] == metric
+                assert len(result["subgraphs"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_find_optimal_qv_qubits_connectivity_metrics(
+        self, mock_env_vars, mock_runtime_service
+    ):
+        """Test that connectivity metrics are computed correctly."""
+        from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qv_qubits
+
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
+            mock_init.return_value = mock_runtime_service
+
+            mock_backend = Mock()
+            mock_backend.name = "ibm_test"
+            mock_backend.num_qubits = 4
+
+            # Create a fully connected 3-qubit subgraph (triangle: 0-1-2-0)
+            # plus qubit 3 connected only to 0
+            mock_config = Mock()
+            mock_config.coupling_map = [
+                [0, 1],
+                [1, 0],
+                [1, 2],
+                [2, 1],
+                [0, 2],
+                [2, 0],  # Triangle complete
+                [0, 3],
+                [3, 0],  # Extra qubit
+            ]
+            mock_backend.configuration.return_value = mock_config
+
+            mock_properties = Mock()
+            mock_properties.faulty_qubits.return_value = []
+            mock_properties.t1.return_value = 100e-6
+            mock_properties.t2.return_value = 50e-6
+            mock_properties.readout_error.return_value = 0.01
+            mock_properties.gate_error.return_value = 0.005
+            mock_backend.properties.return_value = mock_properties
+
+            mock_runtime_service.backend.return_value = mock_backend
+
+            result = await find_optimal_qv_qubits(
+                "ibm_test", num_qubits=3, metric="connectivity"
+            )
+
+            assert result["status"] == "success"
+            # The triangle {0, 1, 2} should be among the top results
+            # It has max_possible_edges = 3, internal_edges = 3, connectivity_ratio = 1.0
+            found_triangle = False
+            for subgraph in result["subgraphs"]:
+                if set(subgraph["qubits"]) == {0, 1, 2}:
+                    found_triangle = True
+                    assert subgraph["internal_edges"] == 3
+                    assert subgraph["max_possible_edges"] == 3
+                    assert subgraph["connectivity_ratio"] == 1.0
+                    assert subgraph["average_path_length"] == 1.0
+                    break
+            assert found_triangle, "Triangle subgraph {0, 1, 2} should be found"
+
+    @pytest.mark.asyncio
+    async def test_find_optimal_qv_qubits_fake_backend_error(self, mock_env_vars):
+        """Test that fake backends return an error."""
+        from qiskit_ibm_runtime_mcp_server.ibm_runtime import find_optimal_qv_qubits
+
+        result = await find_optimal_qv_qubits("fake_brisbane", num_qubits=3)
+
+        assert result["status"] == "error"
+        assert "not supported" in result["message"]
+
+
 class TestResourceIntegration:
     """Test MCP resource integration."""
 
@@ -479,7 +800,9 @@ class TestResourceIntegration:
         """Test ibm_quantum://status resource."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import get_service_status
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
 
             result = await get_service_status()
@@ -497,7 +820,9 @@ class TestErrorHandlingIntegration:
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import setup_ibm_quantum_account
 
         # First call fails with authentication error
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.side_effect = [
                 ValueError("Invalid token"),
                 Mock(),  # Second call succeeds
@@ -520,7 +845,9 @@ class TestErrorHandlingIntegration:
         """Test handling when quantum service is unavailable."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import list_backends
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.side_effect = Exception("Service unavailable")
 
             result = await list_backends()
@@ -529,11 +856,15 @@ class TestErrorHandlingIntegration:
             assert "Failed to list backends" in result["message"]
 
     @pytest.mark.asyncio
-    async def test_network_connectivity_issues(self, mock_env_vars, mock_runtime_service):
+    async def test_network_connectivity_issues(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test handling of network connectivity issues."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import get_backend_properties
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init:
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+        ) as mock_init:
             mock_init.return_value = mock_runtime_service
             mock_runtime_service.backend.side_effect = Exception("Network timeout")
 
@@ -547,7 +878,9 @@ class TestEndToEndScenarios:
     """Test end-to-end scenarios."""
 
     @pytest.mark.asyncio
-    async def test_complete_backend_exploration(self, mock_env_vars, mock_runtime_service):
+    async def test_complete_backend_exploration(
+        self, mock_env_vars, mock_runtime_service
+    ):
         """Test complete backend exploration scenario."""
         from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
             get_backend_properties,
@@ -558,8 +891,12 @@ class TestEndToEndScenarios:
         )
 
         with (
-            patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service") as mock_init,
-            patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy") as mock_least_busy,
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
+            ) as mock_init,
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.least_busy"
+            ) as mock_least_busy,
         ):
             mock_init.return_value = mock_runtime_service
 
@@ -589,7 +926,9 @@ class TestEndToEndScenarios:
             assert least_busy_result["status"] == "success"
 
             # 5. Get detailed properties of recommended backend
-            properties_result = await get_backend_properties(least_busy_result["backend_name"])
+            properties_result = await get_backend_properties(
+                least_busy_result["backend_name"]
+            )
             assert properties_result["status"] == "success"
 
     @pytest.mark.asyncio
@@ -600,7 +939,9 @@ class TestEndToEndScenarios:
             list_my_jobs,
         )
 
-        with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service):
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service
+        ):
             # 1. List recent jobs
             jobs_result = await list_my_jobs(10)
             assert jobs_result["status"] == "success"
