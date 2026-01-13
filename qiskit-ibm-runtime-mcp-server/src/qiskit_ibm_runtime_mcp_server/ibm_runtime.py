@@ -1401,7 +1401,8 @@ async def get_job_results(job_id: str) -> dict[str, Any]:
         backend_name = job.backend().name if job.backend() else "Unknown"
 
         # Check if job is still running
-        if job_status in ["QUEUED", "VALIDATING", "RUNNING"]:
+        # Official status values: INITIALIZING, QUEUED, RUNNING, CANCELLED, DONE, ERROR
+        if job_status in ["INITIALIZING", "QUEUED", "RUNNING"]:
             return {
                 "status": "pending",
                 "job_id": job_id,

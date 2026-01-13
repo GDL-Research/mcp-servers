@@ -678,6 +678,21 @@ class TestGetJobResults:
             assert "still queued" in result["message"]
 
     @pytest.mark.asyncio
+    async def test_get_job_results_job_initializing(self, mock_runtime_service):
+        """Test job results retrieval for initializing job."""
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.service", mock_runtime_service
+        ):
+            mock_job = mock_runtime_service.job.return_value
+            mock_job.status.return_value = "INITIALIZING"
+
+            result = await get_job_results("job_123")
+
+            assert result["status"] == "pending"
+            assert result["job_status"] == "INITIALIZING"
+            assert "still initializing" in result["message"]
+
+    @pytest.mark.asyncio
     async def test_get_job_results_job_failed(self, mock_runtime_service):
         """Test job results retrieval for failed job."""
         with patch(
