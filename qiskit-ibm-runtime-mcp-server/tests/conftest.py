@@ -55,13 +55,17 @@ def mock_runtime_service():
     mock_backend1.name = "ibmq_qasm_simulator"
     mock_backend1.num_qubits = 32
     mock_backend1.simulator = True
-    mock_backend1.status.return_value = Mock(operational=True, pending_jobs=0, status_msg="active")
+    mock_backend1.status.return_value = Mock(
+        operational=True, pending_jobs=0, status_msg="active"
+    )
 
     mock_backend2 = Mock()
     mock_backend2.name = "ibm_brisbane"
     mock_backend2.num_qubits = 127
     mock_backend2.simulator = False
-    mock_backend2.status.return_value = Mock(operational=True, pending_jobs=5, status_msg="active")
+    mock_backend2.status.return_value = Mock(
+        operational=True, pending_jobs=5, status_msg="active"
+    )
 
     mock_service.backends.return_value = [mock_backend1, mock_backend2]
     mock_service.backend.return_value = mock_backend2
@@ -76,6 +80,18 @@ def mock_runtime_service():
     mock_job.error_message.return_value = None
     mock_job.cancel.return_value = None
 
+    # Mock job result (SamplerV2 format)
+    mock_creg_data = Mock()
+    mock_creg_data.get_counts.return_value = {"00": 2048, "11": 2048}
+    mock_data = Mock()
+    mock_data.meas = mock_creg_data
+    mock_pub_result = Mock()
+    mock_pub_result.data = mock_data
+    mock_job.result.return_value = [mock_pub_result]
+
+    # Mock job metrics
+    mock_job.metrics.return_value = {"usage": {"quantum_seconds": 1.5}}
+
     mock_service.jobs.return_value = [mock_job]
     mock_service.job.return_value = mock_job
 
@@ -85,7 +101,9 @@ def mock_runtime_service():
 @pytest.fixture
 def mock_failed_service():
     """Mock a QiskitRuntimeService that fails initialization."""
-    with patch("qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService") as mock_qrs:
+    with patch(
+        "qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService"
+    ) as mock_qrs:
         mock_qrs.side_effect = Exception("Authentication failed")
         mock_qrs.save_account.side_effect = Exception("Invalid token")
         yield mock_qrs

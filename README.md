@@ -20,21 +20,54 @@ This repository contains production-ready MCP servers that enable AI systems to 
 
 ## 🛠️ Available Servers
 
+### 🔬 Qiskit MCP Server
+**Core Qiskit quantum computing capabilities**
+
+Provides quantum circuit creation, manipulation, transpilation, and serialization utilities (QASM3, QPY) for local quantum development using [Qiskit](https://github.com/Qiskit/qiskit)
+
+**📁 Directory**: [`./qiskit-mcp-server/`](./qiskit-mcp-server/)
+
+---
+
 ### 🧠 Qiskit Code Assistant MCP Server
 **Intelligent quantum code completion and assistance**
 
-Provides access to IBM's Qiskit Code Assistant AI for intelligent quantum programming
+Provides access to [IBM's Qiskit Code Assistant](https://quantum.cloud.ibm.com/docs/en/guides/qiskit-code-assistant) for AI-assisted quantum programming
 
 **📁 Directory**: [`./qiskit-code-assistant-mcp-server/`](./qiskit-code-assistant-mcp-server/)
 
 ---
 
-### ⚙️ Qiskit IBM Runtime MCP Server  
+### ⚙️ Qiskit IBM Runtime MCP Server
 **Complete access to IBM Quantum cloud services**
 
-Comprehensive interface to IBM Quantum hardware via Qiskit IBM Runtime
+Comprehensive interface to IBM Quantum hardware via [Qiskit IBM Runtime](https://github.com/Qiskit/qiskit-ibm-runtime/)
 
 **📁 Directory**: [`./qiskit-ibm-runtime-mcp-server/`](./qiskit-ibm-runtime-mcp-server/)
+
+---
+
+### 🚀 Qiskit IBM Transpiler MCP Server
+**AI-powered circuit transpilation**
+
+Access to the [qiskit-ibm-transpiler](https://github.com/Qiskit/qiskit-ibm-transpiler) library for AI-optimized circuit routing and optimization.
+
+**📁 Directory**: [`./qiskit-ibm-transpiler-mcp-server/`](./qiskit-ibm-transpiler-mcp-server/)
+
+## 📚 Examples
+
+Each MCP server includes example code demonstrating how to build AI agents using LangChain:
+
+| Server | Examples |
+|--------|----------|
+| Qiskit MCP Server | [`qiskit-mcp-server/examples/`](./qiskit-mcp-server/examples/) |
+| Qiskit Code Assistant MCP Server | [`qiskit-code-assistant-mcp-server/examples/`](./qiskit-code-assistant-mcp-server/examples/) |
+| Qiskit IBM Runtime MCP Server | [`qiskit-ibm-runtime-mcp-server/examples/`](./qiskit-ibm-runtime-mcp-server/examples/) |
+| Qiskit IBM Transpiler MCP Server | [`qiskit-ibm-transpiler-mcp-server/examples/`](./qiskit-ibm-transpiler-mcp-server/examples/) |
+
+Each examples directory contains:
+- **Jupyter Notebook** (`langchain_agent.ipynb`) - Interactive tutorial with step-by-step examples
+- **Python Script** (`langchain_agent.py`) - Command-line agent with multiple LLM provider support
 
 ## 🚀 Quick Start
 
@@ -54,13 +87,21 @@ Comprehensive interface to IBM Quantum hardware via Qiskit IBM Runtime
 pip install qiskit-mcp-servers
 
 # Or install individual servers
+pip install qiskit-mcp-server
 pip install qiskit-code-assistant-mcp-server
 pip install qiskit-ibm-runtime-mcp-server
+pip install qiskit-ibm-transpiler-mcp-server
 ```
 
 #### Install from Source
 
 Each server is designed to run independently. Choose the server you need:
+
+#### 🔬 Qiskit Server
+```bash
+cd qiskit-mcp-server
+uv run qiskit-mcp-server
+```
 
 #### 🧠 Qiskit Code Assistant Server
 ```bash
@@ -72,6 +113,12 @@ uv run qiskit-code-assistant-mcp-server
 ```bash
 cd qiskit-ibm-runtime-mcp-server
 uv run qiskit-ibm-runtime-mcp-server
+```
+
+#### 🚀 IBM Transpiler Server
+```bash
+cd qiskit-ibm-transpiler-mcp-server
+uv run qiskit-ibm-transpiler-mcp-server
 ```
 
 ### 🔧 Configuration
