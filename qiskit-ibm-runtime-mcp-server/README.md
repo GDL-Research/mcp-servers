@@ -197,10 +197,11 @@ print(f"Recent jobs: {len(jobs['jobs'])}")
 
 | Provider | Package | Default Model |
 |----------|---------|---------------|
-| OpenAI | `langchain-openai` | gpt-4o |
-| Anthropic | `langchain-anthropic` | claude-sonnet-4-20250514 |
-| Google | `langchain-google-genai` | gemini-2.5-pro |
-| Ollama | `langchain-ollama` | llama3.2 |
+| OpenAI | `langchain-openai` | gpt-5.2 |
+| Anthropic | `langchain-anthropic` | claude-sonnet-4-5-20250929 |
+| Google | `langchain-google-genai` | gemini-3-pro-preview |
+| Ollama | `langchain-ollama` | llama3.3 |
+| Watsonx | `langchain-ibm` | ibm/granite-4-h-small |
 
 ```python
 import asyncio
@@ -233,7 +234,7 @@ async def main():
         tools = await load_mcp_tools(session)
 
         # Create agent with LLM
-        llm = ChatOpenAI(model="gpt-4o", temperature=0)
+        llm = ChatOpenAI(model="gpt-5.2", temperature=0)
         agent = create_agent(llm, tools)
 
         # Run a query
