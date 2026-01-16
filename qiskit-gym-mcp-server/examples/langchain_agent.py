@@ -106,6 +106,11 @@ There are THREE distinct environment types. Pay attention to what the user asks 
 - list_saved_models_tool: List models on disk
 - list_loaded_models_tool: List models in memory
 
+## TensorBoard Visualization
+- start_tensorboard_tool: Start TensorBoard to visualize training metrics
+- stop_tensorboard_tool: Stop the running TensorBoard process
+- get_tensorboard_status_tool: Check if TensorBoard is running and on which port
+
 ## Utility Tools
 - generate_random_permutation_tool: Generate random permutation for testing
 - generate_random_linear_function_tool: Generate random linear function
@@ -139,14 +144,17 @@ Only use synchronous training (background=False) for very short demos (< 10 iter
 1. **Always use background=True** for any real training
 2. For batch training multiple environments, use batch_train_environments_tool with background=True
 3. Poll progress with get_training_status_tool or wait with wait_for_training_tool
-4. Save models you want to keep with save_model_tool
-5. Use list_training_sessions_tool to see all running/completed training
+4. Use start_tensorboard_tool to visualize training metrics in real-time
+5. Save models you want to keep with save_model_tool
+6. Use list_training_sessions_tool to see all running/completed training
 
 When a user asks to train a model:
 1. Create an appropriate environment using create_*_env_tool
-2. Start training with start_training_tool(..., background=True)
-3. Use get_training_status_tool to check progress periodically
-4. When complete, save the model if needed with save_model_tool
+2. Optionally start TensorBoard with start_tensorboard_tool for visualization
+3. Start training with start_training_tool(..., background=True)
+4. Use get_training_status_tool to check progress periodically
+5. When complete, save the model if needed with save_model_tool
+6. Stop TensorBoard with stop_tensorboard_tool when done
 """
 
 
@@ -304,9 +312,9 @@ async def interactive_session(provider: str, model: str | None) -> None:
         print("  - 'Create a permutation environment for a 5-qubit linear chain'")
         print("  - 'Train a model with PPO for 50 iterations'")
         print("  - 'Train in background with 200 iterations and check status'")
+        print("  - 'Start TensorBoard to monitor training'")
         print("  - 'Generate a random permutation and synthesize a circuit'")
         print("  - 'Save the model as my_router'")
-        print("  - 'List all environments and models'")
         print("\nType 'quit' to exit, 'clear' to reset conversation history.")
         print("-" * 60 + "\n")
 
