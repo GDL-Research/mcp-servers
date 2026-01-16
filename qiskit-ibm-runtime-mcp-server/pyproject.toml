@@ -1,6 +1,6 @@
 [project]
 name = "qiskit-ibm-runtime-mcp-server"
-version = "0.2.0"
+version = "0.3.0"
 description = "MCP server for IBM Quantum computing services through Qiskit IBM Runtime"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
@@ -103,3 +103,7 @@ examples = [
 [tool.bandit]
 skips = ["B101"]  # Skip assert_used check in tests
 exclude_dirs = ["tests", ".venv", "build", "dist"]
+
+# Ruff configuration
+[tool.ruff.lint.pylint]
+max-returns = 7  # Allow complex validation functions with multiple early returns

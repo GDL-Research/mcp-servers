@@ -133,12 +133,16 @@ print(f"Last 10 jobs: {jobs}")
 job_status = await get_job_status("job_id")
 print(f"Job status: {job_status}")
 
-# 7. Cancel job
+# 7. Get job results (when job is DONE)
+results = await get_job_results("job_id")
+print(f"Counts: {results['counts']}")
+
+# 8. Cancel job
 cancelled_job = await cancel_job("job_id")
 print(f"Cancelled job: {cancelled_job}")
 ```
 
-#### Sync Usage (DSPy, Scripts, Jupyter)
+#### Sync Usage (Scripts, Jupyter)
 
 For frameworks that don't support async operations, all async functions have a `.sync` attribute:
 
@@ -148,8 +152,12 @@ from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
     list_backends,
     least_busy_backend,
     get_backend_properties,
+    get_coupling_map,
+    find_optimal_qubit_chains,
+    find_optimal_qv_qubits,
     list_my_jobs,
     get_job_status,
+    get_job_results,
     cancel_job
 )
 
@@ -165,39 +173,68 @@ print(f"Available backends: {backends['total_backends']}")
 backend = least_busy_backend.sync()
 print(f"Least busy: {backend['backend_name']}")
 
+# Find optimal qubit chains for linear experiments
+chains = find_optimal_qubit_chains.sync(backend['backend_name'], chain_length=5)
+print(f"Best chain: {chains['chains'][0]['qubits']}")
+
+# Find optimal qubits for Quantum Volume experiments
+qv_qubits = find_optimal_qv_qubits.sync(backend['backend_name'], num_qubits=5)
+print(f"Best QV subgraph: {qv_qubits['subgraphs'][0]['qubits']}")
+
 # Works in Jupyter notebooks (handles nested event loops automatically)
 jobs = list_my_jobs.sync(limit=5)
 print(f"Recent jobs: {len(jobs['jobs'])}")
 ```
 
-**DSPy Integration Example:**
+**LangChain Integration Example:**
+
+> **Note:** To run LangChain examples you will need to install the dependencies:
+> ```bash
+> pip install langchain langchain-mcp-adapters langchain-openai python-dotenv
+> ```
 
 ```python
-import dspy
+import asyncio
+import os
+from langchain.agents import create_agent
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
-from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
-    setup_ibm_quantum_account,
-    list_backends,
-    least_busy_backend,
-    get_backend_properties
-)
 
-# Load environment variables (includes QISKIT_IBM_TOKEN)
+# Load environment variables (QISKIT_IBM_TOKEN, OPENAI_API_KEY, etc.)
 load_dotenv()
 
-# Use .sync versions for DSPy tools
-agent = dspy.ReAct(
-    YourSignature,
-    tools=[
-        setup_ibm_quantum_account.sync,  # Optional - only if you need to verify setup
-        list_backends.sync,
-        least_busy_backend.sync,
-        get_backend_properties.sync
-    ]
-)
+async def main():
+    # Configure MCP client
+    mcp_client = MultiServerMCPClient({
+        "qiskit-ibm-runtime": {
+            "transport": "stdio",
+            "command": "qiskit-ibm-runtime-mcp-server",
+            "args": [],
+            "env": {
+                "QISKIT_IBM_TOKEN": os.getenv("QISKIT_IBM_TOKEN", ""),
+                "QISKIT_IBM_RUNTIME_MCP_INSTANCE": os.getenv("QISKIT_IBM_RUNTIME_MCP_INSTANCE", ""),
+            },
+        }
+    })
 
-result = agent(user_request="What QPUs are available?")
+    # Use persistent session for efficient tool calls
+    async with mcp_client.session("qiskit-ibm-runtime") as session:
+        tools = await load_mcp_tools(session)
+
+        # Create agent with LLM
+        llm = ChatOpenAI(model="gpt-5.2", temperature=0)
+        agent = create_agent(llm, tools)
+
+        # Run a query
+        response = await agent.ainvoke("What QPUs are available and which one is least busy?")
+        print(response)
+
+asyncio.run(main())
 ```
+
+For more LLM providers (Anthropic, Google, Ollama, Watsonx) and detailed examples including Jupyter notebooks, see the [examples/](examples/) directory.
 
 
 ## API Reference
@@ -238,6 +275,84 @@ Get detailed properties of specific backend.
 - Current operational status
 - Queue information
 
+#### `get_coupling_map(backend_name: str)`
+Get the coupling map (qubit connectivity) for a backend with detailed analysis.
+
+Supports both real backends (requires credentials) and fake backends (no credentials needed).
+Use `fake_` prefix for offline testing (e.g., `fake_sherbrooke`, `fake_brisbane`).
+
+**Parameters:**
+- `backend_name`: Name of the backend (e.g., `ibm_brisbane` or `fake_sherbrooke`)
+
+**Returns:** Connectivity information including:
+- `edges`: List of [control, target] qubit connection pairs
+- `adjacency_list`: Neighbor mapping for each qubit
+- `bidirectional`: Whether all connections work in both directions
+- `num_qubits`: Total qubit count
+
+**Use cases:**
+- Circuit optimization and qubit mapping
+- SWAP gate minimization planning
+- Offline testing with fake backends
+
+#### `find_optimal_qubit_chains(backend_name, chain_length, num_results, metric)`
+Find optimal linear qubit chains for quantum experiments based on connectivity and calibration data.
+
+Algorithmically identifies the best qubit chains by combining coupling map connectivity
+with real-time calibration data. Essential for experiments requiring linear qubit arrangements.
+
+**Parameters:**
+- `backend_name`: Name of the backend (e.g., `ibm_brisbane`)
+- `chain_length`: Number of qubits in the chain (default: 5, range: 2-20)
+- `num_results`: Number of top chains to return (default: 5, max: 20)
+- `metric`: Scoring metric to optimize:
+  - `two_qubit_error`: Minimize sum of CX/ECR gate errors (default)
+  - `readout_error`: Minimize sum of measurement errors
+  - `combined`: Weighted combination of gate errors, readout, and coherence
+
+**Returns:** Ranked chains with detailed metrics:
+- `qubits`: Ordered list of qubit indices in the chain
+- `score`: Total score (lower is better)
+- `qubit_details`: T1, T2, readout_error for each qubit
+- `edge_errors`: Two-qubit gate error for each connection
+
+**Use cases:**
+- Select qubits for variational quantum algorithms (VQE, QAOA)
+- Plan linear qubit layouts for error correction experiments
+- Identify high-fidelity qubit paths for state transfer
+- Optimize qubit selection for 1D physics simulations
+
+#### `find_optimal_qv_qubits(backend_name, num_qubits, num_results, metric)`
+Find optimal qubit subgraphs for Quantum Volume experiments.
+
+Unlike linear chains, Quantum Volume benefits from densely connected qubit sets where
+qubits can interact with minimal SWAP operations. This tool finds connected subgraphs
+and ranks them by connectivity and calibration quality.
+
+**Parameters:**
+- `backend_name`: Name of the backend (e.g., `ibm_brisbane`)
+- `num_qubits`: Number of qubits in the subgraph (default: 5, range: 2-10)
+- `num_results`: Number of top subgraphs to return (default: 5, max: 20)
+- `metric`: Scoring metric to optimize:
+  - `qv_optimized`: Balanced scoring for QV (connectivity + errors + coherence) (default)
+  - `connectivity`: Maximize internal edges and minimize path lengths
+  - `gate_error`: Minimize total two-qubit gate errors on internal edges
+
+**Returns:** Ranked subgraphs with detailed metrics:
+- `qubits`: List of qubit indices in the subgraph (sorted)
+- `score`: Total score (lower is better)
+- `internal_edges`: Number of edges within the subgraph
+- `connectivity_ratio`: internal_edges / max_possible_edges
+- `average_path_length`: Mean shortest path between qubit pairs
+- `qubit_details`: T1, T2, readout_error for each qubit
+- `edge_errors`: Two-qubit gate error for each internal edge
+
+**Use cases:**
+- Select optimal qubits for Quantum Volume experiments
+- Find densely connected regions for random circuit sampling
+- Identify high-quality qubit clusters for variational algorithms
+- Plan qubit allocation for algorithms requiring all-to-all connectivity
+
 #### `list_my_jobs(limit: int = 10)`
 Get list of recent jobs from your account.
 
@@ -251,6 +366,46 @@ Check status of submitted job.
 - `job_id`: The ID of the job to get its status
 
 **Returns:** Current job status, creation date, backend info
+
+**Job Status Values:**
+- `INITIALIZING`: Job is being prepared
+- `QUEUED`: Job is waiting in the queue
+- `RUNNING`: Job is currently executing
+- `DONE`: Job completed successfully
+- `CANCELLED`: Job was cancelled
+- `ERROR`: Job failed with an error
+
+#### `get_job_results(job_id: str)`
+Retrieve measurement results from a completed quantum job.
+
+**Parameters:**
+- `job_id`: The ID of the completed job
+
+**Returns:** Dictionary containing:
+- `status`: "success", "pending", or "error"
+- `job_id`: The job ID
+- `job_status`: Current status of the job
+- `counts`: Dictionary of measurement outcomes and their counts (e.g., `{"00": 2048, "11": 2048}`)
+- `shots`: Total number of shots executed
+- `backend`: Name of the backend used
+- `execution_time`: Quantum execution time in seconds (if available)
+- `message`: Status message
+
+**Example workflow:**
+```python
+# 1. Submit job
+result = await run_sampler_tool(circuit, backend_name)
+job_id = result["job_id"]
+
+# 2. Check status (poll until DONE)
+status = await get_job_status(job_id)
+print(f"Status: {status['job_status']}")
+
+# 3. When DONE, retrieve results
+if status['job_status'] == 'DONE':
+    results = await get_job_results(job_id)
+    print(f"Counts: {results['counts']}")
+```
 
 #### `cancel_job(job_id: str)`
 Cancel a running or queued job.
