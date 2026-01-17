@@ -72,7 +72,8 @@ def _load_model_metadata(model_name: str) -> dict[str, Any] | None:
 
     try:
         with open(config_path) as f:
-            return json.load(f)
+            data: dict[str, Any] = json.load(f)
+            return data
     except Exception as e:
         logger.error(f"Failed to load model metadata: {e}")
         return None

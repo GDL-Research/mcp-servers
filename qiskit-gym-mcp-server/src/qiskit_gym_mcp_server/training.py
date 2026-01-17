@@ -24,7 +24,7 @@ import logging
 import threading
 import time
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from qiskit_gym_mcp_server.constants import (
     QISKIT_GYM_MAX_ITERATIONS,
@@ -169,9 +169,10 @@ def _run_training_in_background(
         state.update_training_progress(session_id, num_iterations)
 
         # Register as a model
+        env_type_literal = cast("Literal['permutation', 'linear_function', 'clifford']", env_type)
         model_id = state.register_model(
             model_name=f"{env_type}_{session_id}",
-            env_type=env_type,
+            env_type=env_type_literal,
             coupling_map_edges=env_coupling_map_edges,
             num_qubits=env_num_qubits,
             rls_instance=rls,
@@ -746,7 +747,7 @@ async def wait_for_training(
 
         # Check if training finished
         if session.status in ("completed", "error", "stopped"):
-            result = {
+            result: dict[str, Any] = {
                 "status": "success" if session.status == "completed" else "error",
                 "session_id": session_id,
                 "training_status": session.status,

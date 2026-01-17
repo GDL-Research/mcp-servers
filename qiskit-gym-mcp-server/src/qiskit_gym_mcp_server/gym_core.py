@@ -72,6 +72,8 @@ def _resolve_coupling_map(
     if preset is not None:
         return create_coupling_map_from_preset(preset)
     else:
+        # coupling_map is guaranteed to be not None here due to earlier validation
+        assert coupling_map is not None
         return create_coupling_map_from_edges(coupling_map, bidirectional=True)
 
 
