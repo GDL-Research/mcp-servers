@@ -38,7 +38,6 @@ from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
     cancel_job,
     DDSequenceType,
     delete_saved_account,
-    estimator_run,
     find_optimal_qubit_chains,
     find_optimal_qv_qubits,
     get_backend_calibration,
@@ -56,6 +55,7 @@ from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
     list_my_jobs,
     list_saved_accounts,
     QVScoringMetric,
+    run_estimator,
     run_sampler,
     setup_ibm_quantum_account,
     ScoringMetric,
@@ -327,10 +327,16 @@ async def cancel_job_tool(job_id: str) -> dict[str, Any]:
     """Cancel a specific job."""
     return await cancel_job(job_id)
 
+
 @mcp.tool()
-async def estimator_run_tool(num_qubits:int=2, reps:int=2, sparse: list=[("II", 1), ("IZ", 2), ("XI", 3)], theta: list = [0, 1, 1, 2, 3, 5]): # noqa: B006
+async def run_estimator_tool(
+    num_qubits: int = 2,
+    reps: int = 2,
+    sparse: list[Any] = [("II", 1), ("IZ", 2), ("XI", 3)],
+    theta: list[int] = [0, 1, 1, 2, 3, 5],
+) -> dict[str, Any]:  # noqa: B006
     """Run estimator."""
-    return await estimator_run(num_qubits, reps, sparse, theta)
+    return await run_estimator(num_qubits, reps, sparse, theta)
 
 
 @mcp.tool()

@@ -20,7 +20,7 @@ from typing import Any, Literal
 from qiskit.circuit.library import real_amplitudes
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_ibm_runtime import EstimatorV2, QiskitRuntimeService, SamplerV2  # type: ignore[import-untyped]
+from qiskit_ibm_runtime import EstimatorV2, QiskitRuntimeService, SamplerV2
 from qiskit_ibm_runtime.fake_provider import FakeProviderForBackendV2
 from qiskit_ibm_runtime.options import SamplerOptions
 from qiskit_mcp_server.circuit_serialization import CircuitFormat, load_circuit
@@ -249,31 +249,30 @@ def initialize_service(
         raise
 
 
-def initialize_estimator():
+def initialize_estimator() -> tuple[EstimatorV2, Any]:
     """Initialize the EstimatorV2 instance.
 
-        This helper creates an :class:`qiskit_ibm_runtime.EstimatorV2` that
-        interacts with Qiskit Runtime Estimator primitive service.
-            Qiskit Runtime Estimator primitive service estimates expectation values of quantum circuits and
-            observables.
+    This helper creates an :class:`qiskit_ibm_runtime.EstimatorV2` that
+    interacts with Qiskit Runtime Estimator primitive service.
+        Qiskit Runtime Estimator primitive service estimates expectation values of quantum circuits and
+        observables.
 
-        Args:
-            mode: The execution mode used to make the primitive query. It can be:
+    Args:
+        mode: The execution mode used to make the primitive query. It can be:
 
-                * A :class:`Backend` if you are using job mode.
-                * A :class:`Session` if you are using session execution mode.
-                * A :class:`Batch` if you are using batch execution mode.
+            * A :class:`Backend` if you are using job mode.
+            * A :class:`Session` if you are using session execution mode.
+            * A :class:`Batch` if you are using batch execution mode.
 
-                Refer to the
-                `Qiskit Runtime documentation
-                <https://quantum.cloud.ibm.com/docs/guides/execution-modes>`_
-                for more information about the ``Execution modes``.
-            options: Estimator options, see :class:`EstimatorOptions` for detailed description.
+            Refer to the
+            `Qiskit Runtime documentation
+            <https://quantum.cloud.ibm.com/docs/guides/execution-modes>`_
+            for more information about the ``Execution modes``.
+        options: Estimator options, see :class:`EstimatorOptions` for detailed description.
 
-        Returns:
-            EstimatorV2: The initialized estimator.
+    Returns:
+        tuple[EstimatorV2, Any]: The initialized estimator and backend.
     """
-    global estimator_service
     global service
 
     try:
@@ -1580,20 +1579,34 @@ async def get_service_status() -> str:
         status_info = {"connected": False, "error": str(e), "service": "IBM Quantum"}
         return f"IBM Quantum Service Status: {status_info}"
 
-async def estimator_run(qubits, reps, sparse, theta) -> str:
+
+@with_sync
+async def run_estimator(
+    qubits: int,
+    reps: int,
+    sparse: list[Any],
+    theta: list[Any],
+) -> dict[str, Any]:
     """Submit a request to the estimator primitive.
 
-        Args:
-            num_qubits: The number of qubits of the RealAmplitudes circuit.
-            reps: Specifies how often the structure of a rotation layer followed by an entanglement
-                layer is repeated.
-            sparse: Pauli list of terms.
-                A list of Pauli strings or a Pauli string is also allowed
-            theta: An iterable of pub-like object as
-                tuples ``(circuit, observables)`` or ``(circuit, observables, parameter_values)``.
-        Returns:
-            Submitted job information.
-        """
+    Args:
+        num_qubits: The number of qubits of the RealAmplitudes circuit.
+        reps: Specifies how often the structure of a rotation layer followed by an entanglement
+            layer is repeated.
+        sparse: Pauli list of terms.
+            A list of Pauli strings or a Pauli string is also allowed
+        theta: An iterable of pub-like object as
+            tuples ``(circuit, observables)`` or ``(circuit, observables, parameter_values)``.
+    Returns:
+        Dictionary containing:
+            - job_id: The ID of the submitted job (can be used to check status later)
+            - status: "success" or "error"
+            - creation_date: Creation date
+            - backend: Name of the backend used
+            - tags: Job tags
+            - error_message: Error message in case there is one
+
+    """
 
     try:
         estimator_service, backend = initialize_estimator()
@@ -1606,22 +1619,30 @@ async def estimator_run(qubits, reps, sparse, theta) -> str:
 
         job = estimator_service.run([(isa_psi, isa_observables, [theta])])
 
-        job_info = {
-                    "job_id": job.job_id(),
-                    "status": job.status(),
-                    "creation_date": getattr(job, "creation_date", "Unknown"),
-                    "backend": job.backend().name if job.backend() else "Unknown",
-                    "tags": getattr(job, "tags", []),
-                    "error_message": job.error_message()
-                    if hasattr(job, "error_message")
-                    else None
-                }
+        # Get error_message - it might be a method or an attribute
+        error_msg = getattr(job, "error_message", None)
+        if callable(error_msg):
+            error_msg = error_msg()
 
-        return f"Estimator job results: {job_info}"
+        # Get tags safely
+        tags = getattr(job, "tags", None)
+        if tags is None:
+            tags = []
+        else:
+            tags = list(tags) if not isinstance(tags, list) else tags
+
+        return {
+            "status": "success",
+            "job_id": job.job_id(),
+            "backend": job.backend().name if job.backend() else "Unknown",
+            "creation_date": str(getattr(job, "creation_date", "Unknown")),
+            "tags": tags,
+            "error_message": error_msg,
+        }
+
     except Exception as e:
         logger.error(f"Failed run the estimator: {e}")
-        estimator_job_info = {"run": False, "error": str(e)}
-        return f"Error running the estimator: {estimator_job_info}"
+        return {"status": "error", "message": f"Failed run the estimator: {e!s}"}
 
 
 def _clamp(value: int, min_val: int, max_val: int) -> int:
