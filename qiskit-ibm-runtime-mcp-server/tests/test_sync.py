@@ -408,7 +408,7 @@ class TestSyncMethodExecution:
         """Test saved accounts listing with no accounts."""
         mock_response = {
             "status": "success",
-            "accounts": [],
+            "accounts": {},
             "message": "No accounts found",
         }
 
@@ -418,7 +418,7 @@ class TestSyncMethodExecution:
             result = list_saved_accounts.sync()
 
             assert result["status"] == "success"
-            assert result["accounts"] == []
+            assert result["accounts"] == {}
             assert "No accounts found" in result["message"]
 
     def test_active_account_info_sync_success(self):

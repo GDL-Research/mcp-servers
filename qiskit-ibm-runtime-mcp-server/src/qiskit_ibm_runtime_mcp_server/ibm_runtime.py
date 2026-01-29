@@ -2189,12 +2189,8 @@ async def delete_saved_account(account_name: str = "") -> dict[str, Any]:
         - On error: {"status": "error", "deleted": False, "error": error_message}
 
     """
-    global service
-
     try:
-        if service is None:
-            service = initialize_service()
-        is_deleted = service.delete_account(name=account_name)
+        is_deleted = QiskitRuntimeService.delete_account(name=account_name)
 
         if is_deleted:
             return {
@@ -2225,9 +2221,9 @@ async def list_saved_accounts() -> dict[str, Any]:
 
     Returns:
         Dictionary containing account list status:
-        - On success with accounts: {"status": "success", "accounts": [list of account dicts]}
-          Each account dict contains: name, channel, and other metadata
-        - On success with no accounts: {"status": "success", "accounts": [], "message": "No accounts found"}
+        - On success with accounts: {"status": "success", "accounts": {account_name: account_info, ...}}
+          Each account_info dict contains: channel, url, and other metadata
+        - On success with no accounts: {"status": "success", "accounts": {}, "message": "No accounts found"}
         - On error: {"status": "error", "error": error_message}
     """
     try:
@@ -2235,7 +2231,7 @@ async def list_saved_accounts() -> dict[str, Any]:
         if len(accounts_list) > 0:
             return {"status": "success", "accounts": accounts_list}
         else:
-            return {"status": "success", "accounts": [], "message": "No accounts found"}
+            return {"status": "success", "accounts": {}, "message": "No accounts found"}
     except Exception as e:
         logger.error(f"Failed to collect accounts: {e}")
         return {"status": "error", "error": str(e)}
@@ -2256,7 +2252,7 @@ async def active_account_info() -> dict[str, Any]:
         account_info including:
           * "channel": Service channel (e.g., 'ibm_quantum')
           * "url"
-          * "token"
+          * "token": API token (masked for security, showing only last 4 characters)
           * "verify"
           * "private_endpoint"
         - On error: {"status": "error", "error": error_message}
@@ -2267,6 +2263,11 @@ async def active_account_info() -> dict[str, Any]:
         if service is None:
             service = initialize_service()
         account_info = service.active_account()
+        # Mask the token for security - show only last 4 characters
+        if account_info and "token" in account_info and account_info["token"]:
+            token = account_info["token"]
+            account_info = account_info.copy()  # Don't modify the original
+            account_info["token"] = f"***{token[-4:]}" if len(token) > 4 else "***"
         account_data = {"status": "success", "account_info": account_info}
         return account_data
     except Exception as e:
@@ -2285,8 +2286,8 @@ async def active_instance_info() -> dict[str, Any]:
     or service plans).
 
     Returns:
-        String containing the instance CRN (Cloud Resource Name), or error dict:
-        - On success: Instance CRN string (e.g., "crn:v1:bluemix:public:quantum-computing:...")
+        Dictionary containing instance CRN information:
+        - On success: {"status": "success", "instance_crn": "crn:v1:bluemix:public:quantum-computing:..."}
         - On error: {"status": "error", "error": error_message}
     """
     global service

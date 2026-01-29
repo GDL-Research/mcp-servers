@@ -1692,31 +1692,27 @@ class TestDeleteSavedAccount:
     """Test delete_saved_account function."""
 
     @pytest.mark.asyncio
-    async def test_delete_saved_account_success(self, mock_runtime_service):
+    async def test_delete_saved_account_success(self):
         """Test successful account deletion."""
         with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
-            mock_init.return_value = mock_runtime_service
-            mock_runtime_service.delete_account.return_value = True
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService.delete_account"
+        ) as mock_delete:
+            mock_delete.return_value = True
 
             result = await delete_saved_account("test_account")
 
             assert result["status"] == "success"
             assert result["deleted"] is True
             assert "successfully deleted" in result["message"]
-            mock_runtime_service.delete_account.assert_called_once_with(
-                name="test_account"
-            )
+            mock_delete.assert_called_once_with(name="test_account")
 
     @pytest.mark.asyncio
-    async def test_delete_saved_account_not_found(self, mock_runtime_service):
+    async def test_delete_saved_account_not_found(self):
         """Test account deletion when account not found."""
         with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
-            mock_init.return_value = mock_runtime_service
-            mock_runtime_service.delete_account.return_value = False
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService.delete_account"
+        ) as mock_delete:
+            mock_delete.return_value = False
 
             result = await delete_saved_account("nonexistent_account")
 
@@ -1725,15 +1721,12 @@ class TestDeleteSavedAccount:
             assert "not found" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_delete_saved_account_exception(self, mock_runtime_service):
+    async def test_delete_saved_account_exception(self):
         """Test account deletion with exception."""
         with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_service"
-        ) as mock_init:
-            mock_init.return_value = mock_runtime_service
-            mock_runtime_service.delete_account.side_effect = Exception(
-                "Permission denied"
-            )
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService.delete_account"
+        ) as mock_delete:
+            mock_delete.side_effect = Exception("Permission denied")
 
             result = await delete_saved_account("test_account")
 
@@ -1781,7 +1774,7 @@ class TestListSavedAccounts:
             result = await list_saved_accounts()
 
             assert result["status"] == "success"
-            assert result["accounts"] == []
+            assert result["accounts"] == {}
             assert "No accounts found" in result["message"]
 
     @pytest.mark.asyncio
