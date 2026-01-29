@@ -43,6 +43,14 @@ from qiskit_ibm_runtime_mcp_server.ibm_runtime import (
     setup_ibm_quantum_account,
     usage_info,
 )
+from qiskit_ibm_runtime_mcp_server.server import (
+    active_account_info_tool,
+    active_instance_info_tool,
+    available_instances_tool,
+    delete_saved_account_tool,
+    list_saved_accounts_tool,
+    usage_info_tool,
+)
 
 
 class TestGetTokenFromEnv:
@@ -1734,6 +1742,20 @@ class TestDeleteSavedAccount:
             assert result["deleted"] is False
             assert "Permission denied" in result["error"]
 
+    @pytest.mark.asyncio
+    async def test_delete_saved_account_default(self):
+        """Test deletion of default account (empty string)."""
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.QiskitRuntimeService.delete_account"
+        ) as mock_delete:
+            mock_delete.return_value = True
+
+            result = await delete_saved_account("")
+
+            assert result["status"] == "success"
+            assert result["deleted"] is True
+            mock_delete.assert_called_once_with(name="")
+
 
 class TestListSavedAccounts:
     """Test list_saved_accounts function."""
@@ -2048,6 +2070,40 @@ class TestUsageInfo:
 
             assert result["status"] == "error"
             assert "Usage data unavailable" in result["error"]
+
+
+class TestAccountManagementToolsExist:
+    """Test that MCP tool wrappers for account management are properly registered."""
+
+    def test_delete_saved_account_tool_exists(self):
+        """Test delete_saved_account_tool is registered as MCP tool."""
+        assert delete_saved_account_tool is not None
+        assert hasattr(delete_saved_account_tool, "name")
+
+    def test_list_saved_accounts_tool_exists(self):
+        """Test list_saved_accounts_tool is registered as MCP tool."""
+        assert list_saved_accounts_tool is not None
+        assert hasattr(list_saved_accounts_tool, "name")
+
+    def test_active_account_info_tool_exists(self):
+        """Test active_account_info_tool is registered as MCP tool."""
+        assert active_account_info_tool is not None
+        assert hasattr(active_account_info_tool, "name")
+
+    def test_active_instance_info_tool_exists(self):
+        """Test active_instance_info_tool is registered as MCP tool."""
+        assert active_instance_info_tool is not None
+        assert hasattr(active_instance_info_tool, "name")
+
+    def test_available_instances_tool_exists(self):
+        """Test available_instances_tool is registered as MCP tool."""
+        assert available_instances_tool is not None
+        assert hasattr(available_instances_tool, "name")
+
+    def test_usage_info_tool_exists(self):
+        """Test usage_info_tool is registered as MCP tool."""
+        assert usage_info_tool is not None
+        assert hasattr(usage_info_tool, "name")
 
 
 class TestExampleCircuits:
