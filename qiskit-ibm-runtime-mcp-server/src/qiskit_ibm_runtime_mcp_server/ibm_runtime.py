@@ -2222,14 +2222,22 @@ async def list_saved_accounts() -> dict[str, Any]:
     Returns:
         Dictionary containing account list status:
         - On success with accounts: {"status": "success", "accounts": {account_name: account_info, ...}}
-          Each account_info dict contains: channel, url, and other metadata
+          Each account_info dict contains: channel, url, token (masked), and other metadata
         - On success with no accounts: {"status": "success", "accounts": {}, "message": "No accounts found"}
         - On error: {"status": "error", "error": error_message}
     """
     try:
         accounts_list = QiskitRuntimeService.saved_accounts()
         if len(accounts_list) > 0:
-            return {"status": "success", "accounts": accounts_list}
+            # Mask tokens in each account for security
+            masked_accounts = {}
+            for name, info in accounts_list.items():
+                masked_info = info.copy()
+                if "token" in masked_info and masked_info["token"]:
+                    token = masked_info["token"]
+                    masked_info["token"] = f"***{token[-4:]}" if len(token) > 4 else "***"
+                masked_accounts[name] = masked_info
+            return {"status": "success", "accounts": masked_accounts}
         else:
             return {"status": "success", "accounts": {}, "message": "No accounts found"}
     except Exception as e:
