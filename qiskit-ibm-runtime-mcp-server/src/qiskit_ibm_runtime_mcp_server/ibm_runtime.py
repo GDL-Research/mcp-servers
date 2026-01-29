@@ -2235,7 +2235,9 @@ async def list_saved_accounts() -> dict[str, Any]:
                 masked_info = info.copy()
                 if "token" in masked_info and masked_info["token"]:
                     token = masked_info["token"]
-                    masked_info["token"] = f"***{token[-4:]}" if len(token) > 4 else "***"
+                    masked_info["token"] = (
+                        f"***{token[-4:]}" if len(token) > 4 else "***"
+                    )
                 masked_accounts[name] = masked_info
             return {"status": "success", "accounts": masked_accounts}
         else:

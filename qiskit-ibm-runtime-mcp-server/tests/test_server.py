@@ -1742,6 +1742,7 @@ class TestDeleteSavedAccount:
             assert result["deleted"] is False
             assert "Permission denied" in result["error"]
 
+
 class TestListSavedAccounts:
     """Test list_saved_accounts function."""
 
@@ -1774,7 +1775,9 @@ class TestListSavedAccounts:
             assert result["accounts"]["ibm_quantum_platform"]["token"] == "***c123"
             assert result["accounts"]["custom_account"]["token"] == "***z789"
             # Verify other fields are unchanged
-            assert result["accounts"]["ibm_quantum_platform"]["channel"] == "ibm_quantum"
+            assert (
+                result["accounts"]["ibm_quantum_platform"]["channel"] == "ibm_quantum"
+            )
             assert result["accounts"]["custom_account"]["channel"] == "ibm_cloud"
 
     @pytest.mark.asyncio
