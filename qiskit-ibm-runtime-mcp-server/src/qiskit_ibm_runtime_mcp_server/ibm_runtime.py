@@ -12,9 +12,11 @@
 
 """Core IBM Runtime functions for the MCP server."""
 
+import asyncio
 import contextlib
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Literal
 
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
@@ -95,6 +97,9 @@ def get_token_from_env() -> str | None:
 
 # Global service instance
 service: QiskitRuntimeService | None = None
+
+# Thread pool for parallel backend operations (limit concurrent API calls)
+_backend_executor = ThreadPoolExecutor(max_workers=10)
 
 
 def _build_adjacency_list(
@@ -298,6 +303,34 @@ async def setup_ibm_quantum_account(
         return {"status": "error", "message": f"Failed to set up account: {e!s}"}
 
 
+def _fetch_backend_info(backend: Any) -> dict[str, Any]:
+    """Fetch backend info including status (runs in thread pool)."""
+    backend_name = getattr(backend, "name", "unknown")
+    num_qubits = getattr(backend, "num_qubits", 0)
+    simulator = getattr(backend, "simulator", False)
+
+    try:
+        status = backend.status()
+        return {
+            "name": backend_name,
+            "num_qubits": num_qubits,
+            "simulator": simulator,
+            "operational": status.operational,
+            "pending_jobs": status.pending_jobs,
+            "status_msg": status.status_msg,
+        }
+    except Exception as status_err:
+        logger.warning(f"Failed to get status for backend {backend_name}: {status_err}")
+        return {
+            "name": backend_name,
+            "num_qubits": num_qubits,
+            "simulator": simulator,
+            "operational": False,
+            "pending_jobs": 0,
+            "status_msg": "Status unavailable",
+        }
+
+
 @with_sync
 async def list_backends() -> dict[str, Any]:
     """
@@ -313,42 +346,18 @@ async def list_backends() -> dict[str, Any]:
             service = initialize_service()
 
         backends = service.backends()
-        backend_list = []
 
-        for backend in backends:
-            backend_name = getattr(backend, "name", "unknown")
-            num_qubits = getattr(backend, "num_qubits", 0)
-            simulator = getattr(backend, "simulator", False)
-
-            # Try to get status (this is where API errors can occur)
-            try:
-                status = backend.status()
-                backend_info = {
-                    "name": backend_name,
-                    "num_qubits": num_qubits,
-                    "simulator": simulator,
-                    "operational": status.operational,
-                    "pending_jobs": status.pending_jobs,
-                    "status_msg": status.status_msg,
-                }
-            except Exception as status_err:
-                logger.warning(
-                    f"Failed to get status for backend {backend_name}: {status_err}"
-                )
-                backend_info = {
-                    "name": backend_name,
-                    "num_qubits": num_qubits,
-                    "simulator": simulator,
-                    "operational": False,
-                    "pending_jobs": 0,
-                    "status_msg": "Status unavailable",
-                }
-
-            backend_list.append(backend_info)
+        # Fetch all backend statuses in parallel using thread pool
+        loop = asyncio.get_running_loop()
+        tasks = [
+            loop.run_in_executor(_backend_executor, _fetch_backend_info, backend)
+            for backend in backends
+        ]
+        backend_list = await asyncio.gather(*tasks)
 
         return {
             "status": "success",
-            "backends": backend_list,
+            "backends": list(backend_list),
             "total_backends": len(backend_list),
         }
 
