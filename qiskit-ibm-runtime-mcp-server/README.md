@@ -262,8 +262,9 @@ Get list of available quantum backends.
 - Number of qubits, coupling map
 - Simulator vs. hardware designation
 
-### `least_busy_backend()`
-Get the current least busy IBM Quantum backend available
+#### `least_busy_backend()`
+Get the current least busy IBM Quantum backend available.
+
 **Returns:** The backend with the fewest number of pending jobs
 
 #### `get_backend_properties(backend_name: str)`
@@ -420,6 +421,7 @@ List all IBM Quantum accounts saved on disk.
 - `status`: "success" or "error"
 - `accounts`: Dictionary of saved accounts (keyed by account name)
 - Each account contains: channel, url, token (masked for security)
+- `message`: Status message
 
 **Note:** Tokens are masked in the response, showing only the last 4 characters.
 
