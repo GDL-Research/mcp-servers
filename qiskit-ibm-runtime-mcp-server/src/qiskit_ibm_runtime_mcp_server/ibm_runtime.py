@@ -2178,7 +2178,7 @@ c = measure q;
 
 
 @with_sync
-async def delete_saved_account(account_name: str = "") -> dict[str, Any]:
+async def delete_saved_account(account_name: str) -> dict[str, Any]:
     """
     Delete a saved IBM Quantum account from disk.
 
@@ -2187,9 +2187,9 @@ async def delete_saved_account(account_name: str = "") -> dict[str, Any]:
     The operation CANNOT be undone. Deleted credentials must be re-entered to restore access.
 
     Args:
-        account_name: Name of the saved account to delete. If empty string (default),
-                     deletes the default account. Account names are typically in the
-                     format 'ibm_quantum_platform' or custom names set during save.
+        account_name: Name of the saved account to delete. Use list_saved_accounts()
+                     to find available account names. Account names are typically in
+                     the format 'ibm_quantum_platform' or custom names set during save.
 
     Returns:
         Dictionary containing deletion status:
@@ -2198,12 +2198,8 @@ async def delete_saved_account(account_name: str = "") -> dict[str, Any]:
         - On error: {"status": "error", "deleted": False, "error": error_message}
 
     """
-    global service
-
     try:
-        if service is None:
-            service = initialize_service()
-        is_deleted = service.delete_account(name=account_name)
+        is_deleted = QiskitRuntimeService.delete_account(name=account_name)
 
         if is_deleted:
             return {
@@ -2234,17 +2230,27 @@ async def list_saved_accounts() -> dict[str, Any]:
 
     Returns:
         Dictionary containing account list status:
-        - On success with accounts: {"status": "success", "accounts": [list of account dicts]}
-          Each account dict contains: name, channel, and other metadata
-        - On success with no accounts: {"status": "success", "accounts": [], "message": "No accounts found"}
+        - On success with accounts: {"status": "success", "accounts": {account_name: account_info, ...}}
+          Each account_info dict contains: channel, url, token (masked), and other metadata
+        - On success with no accounts: {"status": "success", "accounts": {}, "message": "No accounts found"}
         - On error: {"status": "error", "error": error_message}
     """
     try:
         accounts_list = QiskitRuntimeService.saved_accounts()
         if len(accounts_list) > 0:
-            return {"status": "success", "accounts": accounts_list}
+            # Mask tokens in each account for security
+            masked_accounts = {}
+            for name, info in accounts_list.items():
+                masked_info = info.copy()
+                if "token" in masked_info and masked_info["token"]:
+                    token = masked_info["token"]
+                    masked_info["token"] = (
+                        f"***{token[-4:]}" if len(token) > 4 else "***"
+                    )
+                masked_accounts[name] = masked_info
+            return {"status": "success", "accounts": masked_accounts}
         else:
-            return {"status": "success", "accounts": [], "message": "No accounts found"}
+            return {"status": "success", "accounts": {}, "message": "No accounts found"}
     except Exception as e:
         logger.error(f"Failed to collect accounts: {e}")
         return {"status": "error", "error": str(e)}
@@ -2265,7 +2271,7 @@ async def active_account_info() -> dict[str, Any]:
         account_info including:
           * "channel": Service channel (e.g., 'ibm_quantum')
           * "url"
-          * "token"
+          * "token": API token (masked for security, showing only last 4 characters)
           * "verify"
           * "private_endpoint"
         - On error: {"status": "error", "error": error_message}
@@ -2276,6 +2282,11 @@ async def active_account_info() -> dict[str, Any]:
         if service is None:
             service = initialize_service()
         account_info = service.active_account()
+        # Mask the token for security - show only last 4 characters
+        if account_info and "token" in account_info and account_info["token"]:
+            token = account_info["token"]
+            account_info = account_info.copy()  # Don't modify the original
+            account_info["token"] = f"***{token[-4:]}" if len(token) > 4 else "***"
         account_data = {"status": "success", "account_info": account_info}
         return account_data
     except Exception as e:
@@ -2294,8 +2305,8 @@ async def active_instance_info() -> dict[str, Any]:
     or service plans).
 
     Returns:
-        String containing the instance CRN (Cloud Resource Name), or error dict:
-        - On success: Instance CRN string (e.g., "crn:v1:bluemix:public:quantum-computing:...")
+        Dictionary containing instance CRN information:
+        - On success: {"status": "success", "instance_crn": "crn:v1:bluemix:public:quantum-computing:..."}
         - On error: {"status": "error", "error": error_message}
     """
     global service
@@ -2338,10 +2349,10 @@ async def available_instances() -> dict[str, Any]:
     try:
         if service is None:
             service = initialize_service()
-        instances = service.instances()
+        instances = list(service.instances())
         instance_data = {
             "status": "success",
-            "instances": list(instances),
+            "instances": instances,
             "total_instances": len(instances),
         }
         return instance_data
