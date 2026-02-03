@@ -375,9 +375,9 @@ class TestAIRouting:
     @pytest.mark.parametrize(
         "coupling_map, expected_error",
         [
-            ("not_a_list", "coupling_map must be a list of qubit pairs"),
+            ("not_a_list", "coupling_map must be a non-empty list of qubit pairs"),
             ([[0, 1], [1]], "coupling_map must contain pairs of qubit indices"),
-            ([], "coupling_map cannot be empty"),
+            ([], "coupling_map must be a non-empty list of qubit pairs"),
         ],
     )
     async def test_ai_routing_invalid_coupling_map(
@@ -1133,10 +1133,10 @@ class TestHybridAITranspile:
     @pytest.mark.parametrize(
         "initial_layout, expected_error",
         [
-            ("not_a_list", "initial_layout must be a list of integers"),
+            ("not_a_list", "initial_layout must be a non-empty list of integers"),
             ([-1, 0, 1], "initial_layout must contain only non-negative integers"),
             ([0, "a", 2], "initial_layout must contain only non-negative integers"),
-            ([], "initial_layout cannot be empty"),
+            ([], "initial_layout must be a non-empty list of integers"),
         ],
     )
     async def test_hybrid_ai_transpile_invalid_initial_layout(
@@ -1155,12 +1155,12 @@ class TestHybridAITranspile:
     @pytest.mark.parametrize(
         "coupling_map, expected_error",
         [
-            ("not_a_list", "coupling_map must be a list of qubit pairs"),
+            ("not_a_list", "coupling_map must be a non-empty list of qubit pairs"),
             ([[0, 1], [1]], "coupling_map must contain pairs of qubit indices"),
             ([[0, 1, 2]], "coupling_map must contain pairs of qubit indices"),
             ([[0, -1]], "coupling_map qubit indices must be non-negative integers"),
             ([[0, "a"]], "coupling_map qubit indices must be non-negative integers"),
-            ([], "coupling_map cannot be empty"),
+            ([], "coupling_map must be a non-empty list of qubit pairs"),
         ],
     )
     async def test_hybrid_ai_transpile_invalid_coupling_map(

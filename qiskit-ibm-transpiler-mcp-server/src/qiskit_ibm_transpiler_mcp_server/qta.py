@@ -76,25 +76,34 @@ def _validate_qubit_targeting_params(
     Returns:
         Error message string if validation fails, None if all validations pass.
     """
-    if initial_layout is not None:
-        if not isinstance(initial_layout, list):
-            return "initial_layout must be a list of integers"
-        if not all(isinstance(q, int) and q >= 0 for q in initial_layout):
-            return "initial_layout must contain only non-negative integers"
-        if len(initial_layout) == 0:
-            return "initial_layout cannot be empty"
+    error = _validate_initial_layout(initial_layout)
+    if error:
+        return error
+    return _validate_coupling_map(coupling_map)
 
-    if coupling_map is not None:
-        if not isinstance(coupling_map, list):
-            return "coupling_map must be a list of qubit pairs"
-        if len(coupling_map) == 0:
-            return "coupling_map cannot be empty"
-        for edge in coupling_map:
-            if not isinstance(edge, list) or len(edge) != 2:
-                return "coupling_map must contain pairs of qubit indices (e.g., [[0, 1], [1, 2]])"
-            if not all(isinstance(q, int) and q >= 0 for q in edge):
-                return "coupling_map qubit indices must be non-negative integers"
 
+def _validate_initial_layout(initial_layout: list[int] | None) -> str | None:
+    """Validate initial_layout parameter."""
+    if initial_layout is None:
+        return None
+    if not isinstance(initial_layout, list) or len(initial_layout) == 0:
+        return "initial_layout must be a non-empty list of integers"
+    if not all(isinstance(q, int) and q >= 0 for q in initial_layout):
+        return "initial_layout must contain only non-negative integers"
+    return None
+
+
+def _validate_coupling_map(coupling_map: list[list[int]] | None) -> str | None:
+    """Validate coupling_map parameter."""
+    if coupling_map is None:
+        return None
+    if not isinstance(coupling_map, list) or len(coupling_map) == 0:
+        return "coupling_map must be a non-empty list of qubit pairs"
+    for edge in coupling_map:
+        if not isinstance(edge, list) or len(edge) != 2:
+            return "coupling_map must contain pairs of qubit indices (e.g., [[0, 1], [1, 2]])"
+        if not all(isinstance(q, int) and q >= 0 for q in edge):
+            return "coupling_map qubit indices must be non-negative integers"
     return None
 
 
