@@ -128,7 +128,7 @@ class TestStartTraining:
         assert kwargs["initial_difficulty"] == 2
 
     @pytest.mark.asyncio
-    async def test_start_training_invalid_initial_difficulty(self):
+    async def test_start_training_invalid_initial_difficulty(self, mock_permutation_gym):
         """Test error when initial_difficulty is less than 1."""
         env_result = await create_permutation_environment(preset="linear_5")
         env_id = env_result["env_id"]
