@@ -485,7 +485,9 @@ async def hybrid_ai_transpile(
             qiskit_transpile_options = {"initial_layout": initial_layout}
 
         # Create hybrid AI pass manager
+        # Pass both backend (for basis gates/target) and coupling_map (may be overridden)
         ai_pass_manager = generate_ai_pass_manager(
+            backend=backend_service,
             coupling_map=target_coupling_map,
             ai_optimization_level=ai_optimization_level,
             optimization_level=optimization_level,
