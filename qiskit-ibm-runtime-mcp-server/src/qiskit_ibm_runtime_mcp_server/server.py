@@ -330,13 +330,98 @@ async def cancel_job_tool(job_id: str) -> dict[str, Any]:
 
 @mcp.tool()
 async def run_estimator_tool(
-    num_qubits: int = 2,
-    reps: int = 2,
-    sparse: list[Any] = [("II", 1), ("IZ", 2), ("XI", 3)],
-    theta: list[int] = [0, 1, 1, 2, 3, 5],
-) -> dict[str, Any]:  # noqa: B006
-    """Run estimator."""
-    return await run_estimator(num_qubits, reps, sparse, theta)
+    circuit: str,
+    observables: str | list[str] | list[tuple[str, float]],
+    parameter_values: list[float] | None = None,
+    backend_name: str | None = None,
+    circuit_format: CircuitFormat = "auto",
+    optimization_level: int = 1,
+    resilience_level: int = 1,
+    zne_mitigation: bool = True,
+    zne_noise_factors: tuple[float, ...] | None = None,
+) -> dict[str, Any]:
+    """Run a quantum circuit using the Qiskit Runtime EstimatorV2 primitive.
+
+    The Estimator primitive computes expectation values of observables for quantum circuits.
+    This is essential for variational quantum algorithms (VQE, QAOA), quantum chemistry
+    simulations, and any application requiring expectation value estimation.
+
+    Error Mitigation:
+        This function includes built-in error mitigation techniques enabled by default:
+        - Resilience Levels: Automatic error mitigation strategies
+        - ZNE (Zero Noise Extrapolation): Extrapolates to zero-noise limit
+
+    Args:
+        circuit: The quantum circuit to execute. Accepts multiple formats:
+                - OpenQASM 3.0 string (recommended):
+                  ```
+                  OPENQASM 3.0;
+                  include "stdgates.inc";
+                  qubit[2] q;
+                  h q[0];
+                  cx q[0], q[1];
+                  ```
+                - OpenQASM 2.0 string (legacy, auto-detected)
+                - Base64-encoded QPY binary (for tool chaining with transpiler output)
+                The circuit can be parameterized (use parameter_values to bind).
+        observables: Observable(s) to measure expectation values. Accepts:
+                    - Single Pauli string: "IIXY" (identity on qubits 0,1; X on 2; Y on 3)
+                    - List of Pauli strings: ["IIXY", "ZZII", "XXYY"]
+                    - Weighted Hamiltonian as list of (Pauli, coefficient) tuples:
+                      [("IIXY", 0.5), ("ZZII", -0.3), ("XXYY", 0.2)]
+                    Pauli strings use: I (identity), X, Y, Z for each qubit position.
+        parameter_values: Values for parameterized circuits. If the circuit has parameters
+                         (e.g., rotation angles), provide a list of float values in the
+                         same order as circuit.parameters. Optional if circuit has no parameters.
+        backend_name: Name of the IBM Quantum backend (e.g., 'ibm_brisbane').
+                     If not provided, uses the least busy operational backend.
+        circuit_format: Format of the circuit input. Options:
+                       - "auto" (default): Automatically detect format
+                       - "qasm3": OpenQASM 3.0/2.0 text format
+                       - "qpy": Base64-encoded QPY binary format
+        optimization_level: Qiskit transpilation optimization level (0-3). Default is 1.
+                           Higher levels may produce better circuits but take longer.
+                           - 0: No optimization
+                           - 1: Light optimization (default, good balance)
+                           - 2: Heavy optimization
+                           - 3: Highest optimization (slowest)
+        resilience_level: Error mitigation resilience level (0-2). Default is 1.
+                         - 0: No error mitigation
+                         - 1: Light error mitigation (default, recommended)
+                         - 2: Heavy error mitigation (slower but more accurate)
+        zne_mitigation: Enable Zero Noise Extrapolation (ZNE). Default is True.
+                       ZNE extrapolates results to the zero-noise limit for better accuracy.
+        zne_noise_factors: Noise amplification factors for ZNE. Default is (1, 1.5, 2).
+                          Only used if zne_mitigation is True.
+
+    Returns:
+        Job submission status including:
+        - job_id: Use with get_job_status_tool to check completion
+        - backend: The backend where the circuit will run
+        - error_mitigation: Summary of enabled error mitigation techniques
+        - message: Status message
+        - note: Information about retrieving results
+
+    Note:
+        Jobs run asynchronously. Use get_job_status_tool to monitor progress,
+        then get_job_results_tool to retrieve expectation values when complete.
+
+    Example observables:
+        - Single Z measurement on qubit 0: "Z"
+        - Z on qubits 0 and 1: "ZZ"
+        - Hamiltonian H = 0.5*X₀X₁ - 0.3*Z₀Z₁: [("XX", 0.5), ("ZZ", -0.3)]
+    """
+    return await run_estimator(
+        circuit,
+        observables,
+        parameter_values,
+        backend_name,
+        circuit_format,
+        optimization_level,
+        resilience_level,
+        zne_mitigation,
+        zne_noise_factors,
+    )
 
 
 @mcp.tool()
