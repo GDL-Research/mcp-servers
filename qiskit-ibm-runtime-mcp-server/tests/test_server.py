@@ -1149,194 +1149,341 @@ class TestGetBackendCalibration:
 
 
 class TestRunEstimator:
-    """Test run_estimator function."""
+    """Test run_estimator function with new flexible API."""
+
+    # Sample valid QASM3 circuit for testing
+    SAMPLE_QASM3 = """OPENQASM 3.0;
+include "stdgates.inc";
+qubit[2] q;
+h q[0];
+cx q[0], q[1];
+"""
 
     @pytest.mark.asyncio
-    async def test_run_estimator_success(self, mock_estimator_service, mock_backend):
+    async def test_run_estimator_success_with_single_observable(
+        self, mock_runtime_service
+    ):
+        """Test run_estimator with a single Pauli string observable."""
         with (
             patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_estimator",
-                return_value=(mock_estimator_service, mock_backend),
-            ) as mock_init,
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+                mock_runtime_service,
+            ),
             patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.real_amplitudes",
-                return_value=Mock(name="circuit"),
-            ) as mock_real_amplitudes,
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.load_circuit",
+                return_value={
+                    "status": "success",
+                    "circuit": Mock(name="circuit", parameters=[]),
+                },
+            ) as mock_load,
             patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp.from_list",
-                return_value=Mock(name="hamiltonian"),
-            ) as mock_pauli_from_list,
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp",
+                return_value=Mock(
+                    name="hamiltonian", apply_layout=Mock(return_value=Mock())
+                ),
+            ) as mock_pauli,
             patch(
                 "qiskit_ibm_runtime_mcp_server.ibm_runtime.generate_preset_pass_manager",
                 return_value=Mock(
-                    name="pass_manager", run=Mock(return_value=Mock(name="isa_psi"))
+                    run=Mock(return_value=Mock(name="isa_circuit", layout=Mock()))
                 ),
-            ) as mock_pm,
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.EstimatorV2",
+            ) as mock_estimator_cls,
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime._get_estimator_backend",
+            ) as mock_get_backend,
         ):
-            # Fake the layout and observables
-            isa_psi = mock_pm.return_value.run.return_value
-            isa_psi.layout = Mock(name="layout")
-            hamiltonian = mock_pauli_from_list.return_value
-            hamiltonian.apply_layout.return_value = Mock(name="isa_observables")
+            # Setup backend
+            backend = Mock(name="backend")
+            backend.name = "ibm_example"
+            mock_get_backend.return_value = (backend, None)
 
-            # Fake EstimatorJob
+            # Setup job
             job = Mock(name="est_job")
             job.job_id.return_value = "est_job_123"
-            job.status.return_value = "QUEUED"
+            job.backend.return_value = backend
             job.creation_date = "2024-01-19T12:00:00Z"
-            job.backend.return_value.name = "ibm_example"
             job.tags = []
             job.error_message = None
 
-            mock_estimator_service.run.return_value = job
+            mock_estimator = Mock()
+            mock_estimator.run.return_value = job
+            mock_estimator_cls.return_value = mock_estimator
 
             # Run the function under test
             result = await run_estimator(
-                qubits=4,
-                reps=2,
-                sparse=[("ZZ", 1.0), ("IX", 0.5)],
-                theta=[0.1, 0.2, 0.3, 0.4],
+                circuit=self.SAMPLE_QASM3,
+                observables="ZZ",  # Single Pauli string
             )
 
-            # Assertions – all keys should be present
+            # Assertions
             assert result["status"] == "success"
             assert result["job_id"] == "est_job_123"
             assert result["backend"] == "ibm_example"
-            assert result["creation_date"] == "2024-01-19T12:00:00Z"
-            assert result["tags"] == []
-            assert result["error_message"] is None
+            assert "message" in result
+            assert "note" in result
 
-            # Make sure everything was wired up correctly
-            mock_init.assert_called_once()
-            mock_real_amplitudes.assert_called_once_with(num_qubits=4, reps=2)
-            mock_pauli_from_list.assert_called_once_with([("ZZ", 1.0), ("IX", 0.5)])
-            mock_pm.assert_called_once_with(backend=mock_backend, optimization_level=1)
-            isa_psi.layout.apply_layout.assert_not_called()  # layout is set on the circuit
+            # Verify circuit was loaded
+            mock_load.assert_called_once()
 
-            # The estimator service receives a single tuple with isa_observables
-            mock_estimator_service.run.assert_called_once_with(
-                [
-                    (
-                        isa_psi,
-                        hamiltonian.apply_layout.return_value,
-                        [[0.1, 0.2, 0.3, 0.4]],
-                    )
-                ]
-            )
+            # Verify SparsePauliOp was created with single string
+            mock_pauli.assert_called_once_with("ZZ")
 
     @pytest.mark.asyncio
-    async def test_run_estimator_service_initialisation_failure(self):
-        """
-        The helper that creates the estimator service throws an exception.
-        run_estimator should surface an error response.
-        """
-        with patch(
-            "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_estimator",
-            side_effect=Exception("Service init error"),
-        ):
-            result = await run_estimator(
-                qubits=2,
-                reps=1,
-                sparse=[("Z", 1.0)],
-                theta=[0.1, 0.2],
-            )
-            assert result["status"] == "error"
-            assert "Failed run the estimator" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_run_estimator_submission_failure(
-        self,
-        mock_estimator_service,
+    async def test_run_estimator_success_with_observable_list(
+        self, mock_runtime_service
     ):
-        """
-        The estimator service raises an exception during `run()`.
-        """
+        """Test run_estimator with a list of Pauli observables."""
         with (
             patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_estimator",
-                return_value=(mock_estimator_service, Mock(name="backend")),
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+                mock_runtime_service,
             ),
             patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.real_amplitudes",
-                return_value=Mock(name="circuit"),
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.load_circuit",
+                return_value={
+                    "status": "success",
+                    "circuit": Mock(name="circuit", parameters=[]),
+                },
             ),
             patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp.from_list",
-                return_value=Mock(name="hamiltonian"),
-            ),
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp",
+            ) as mock_pauli_cls,
             patch(
                 "qiskit_ibm_runtime_mcp_server.ibm_runtime.generate_preset_pass_manager",
                 return_value=Mock(
-                    name="pass_manager", run=Mock(return_value=Mock(name="isa_psi"))
+                    run=Mock(return_value=Mock(name="isa_circuit", layout=Mock()))
                 ),
             ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.EstimatorV2",
+            ) as mock_estimator_cls,
         ):
-            mock_estimator_service.run.side_effect = Exception("Job submit error")
+            # Setup
+            backend = Mock(name="backend")
+            backend.name = "ibm_brisbane"
+            mock_runtime_service.backend.return_value = backend
 
-            result = await run_estimator(
-                qubits=3,
-                reps=1,
-                sparse=[("X", 1.0)],
-                theta=[0.5, 0.6, 0.7],
-            )
+            mock_pauli = Mock(name="hamiltonian")
+            mock_pauli.apply_layout.return_value = Mock()
+            mock_pauli_cls.from_list.return_value = mock_pauli
 
-            assert result["status"] == "error"
-            assert "Failed run the estimator" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_run_estimator_error_message_in_job(
-        self,
-        mock_estimator_service,
-        mock_backend,
-    ):
-        """
-        The estimator service returns a job that reports an error
-        via `error_message()`.  `run_estimator` should propagate it.
-        """
-        with (
-            patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.initialize_estimator",
-                return_value=(mock_estimator_service, mock_backend),
-            ),
-            patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.real_amplitudes",
-                return_value=Mock(name="circuit"),
-            ),
-            patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp.from_list",
-                return_value=Mock(name="hamiltonian"),
-            ),
-            patch(
-                "qiskit_ibm_runtime_mcp_server.ibm_runtime.generate_preset_pass_manager",
-                return_value=Mock(
-                    name="pass_manager", run=Mock(return_value=Mock(name="isa_psi"))
-                ),
-            ),
-        ):
-            isa_psi = Mock(name="isa_psi")
-            isa_psi.layout = Mock(name="layout")
-            hamiltonian = Mock(name="hamiltonian")
-            hamiltonian.apply_layout.return_value = Mock(name="isa_observables")
-
-            job = Mock(name="est_job_err")
-            job.job_id.return_value = "est_job_err"
-            job.status.return_value = "ERROR"
+            job = Mock(name="est_job")
+            job.job_id.return_value = "est_job_456"
+            job.backend.return_value = backend
             job.creation_date = "2024-01-19T12:00:00Z"
-            job.backend.return_value.name = "ibm_example"
-            job.tags = []
-            job.error_message = "Something bad happened"
+            job.tags = ["test"]
+            job.error_message = None
 
-            mock_estimator_service.run.return_value = job
+            mock_estimator = Mock()
+            mock_estimator.run.return_value = job
+            mock_estimator_cls.return_value = mock_estimator
 
+            # Run with list of observables
             result = await run_estimator(
-                qubits=2,
-                reps=1,
-                sparse=[("Z", 1.0)],
-                theta=[0.9, 0.1],
+                circuit=self.SAMPLE_QASM3,
+                observables=["ZZ", "XX", "YY"],
+                backend_name="ibm_brisbane",
             )
 
             assert result["status"] == "success"
-            assert result["error_message"] == "Something bad happened"
+            assert result["job_id"] == "est_job_456"
+
+            # Verify from_list was called with equal-weight observables
+            mock_pauli_cls.from_list.assert_called_once_with(
+                [("ZZ", 1.0), ("XX", 1.0), ("YY", 1.0)]
+            )
+
+    @pytest.mark.asyncio
+    async def test_run_estimator_success_with_weighted_hamiltonian(
+        self, mock_runtime_service
+    ):
+        """Test run_estimator with weighted Hamiltonian (list of tuples)."""
+        with (
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+                mock_runtime_service,
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.load_circuit",
+                return_value={
+                    "status": "success",
+                    "circuit": Mock(name="circuit", parameters=[Mock(), Mock()]),
+                },
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp",
+            ) as mock_pauli_cls,
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.generate_preset_pass_manager",
+                return_value=Mock(
+                    run=Mock(return_value=Mock(name="isa_circuit", layout=Mock()))
+                ),
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.EstimatorV2",
+            ) as mock_estimator_cls,
+        ):
+            # Setup
+            backend = Mock(name="backend")
+            backend.name = "ibm_fez"
+            mock_runtime_service.least_busy.return_value = backend
+
+            mock_pauli = Mock(name="hamiltonian")
+            mock_pauli.apply_layout.return_value = Mock()
+            mock_pauli_cls.from_list.return_value = mock_pauli
+
+            job = Mock(name="est_job")
+            job.job_id.return_value = "est_job_789"
+            job.backend.return_value = backend
+            job.creation_date = "2024-01-19T12:00:00Z"
+            job.tags = []
+            job.error_message = None
+
+            mock_estimator = Mock()
+            mock_estimator.run.return_value = job
+            mock_estimator_cls.return_value = mock_estimator
+
+            # Run with weighted Hamiltonian and parameter values
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables=[("ZZ", 0.5), ("XX", -0.3), ("YY", 0.2)],
+                parameter_values=[0.1, 0.2],
+                optimization_level=2,
+            )
+
+            assert result["status"] == "success"
+            assert result["job_id"] == "est_job_789"
+
+            # Verify from_list was called with weighted observables
+            mock_pauli_cls.from_list.assert_called_once_with(
+                [("ZZ", 0.5), ("XX", -0.3), ("YY", 0.2)]
+            )
+
+    @pytest.mark.asyncio
+    async def test_run_estimator_circuit_load_failure(self, mock_runtime_service):
+        """Test run_estimator when circuit loading fails."""
+        with (
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+                mock_runtime_service,
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.load_circuit",
+                return_value={"status": "error", "message": "Invalid QASM"},
+            ),
+        ):
+            result = await run_estimator(
+                circuit="invalid qasm",
+                observables="ZZ",
+            )
+
+            assert result["status"] == "error"
+            assert "Invalid QASM" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_run_estimator_invalid_observables(self, mock_runtime_service):
+        """Test run_estimator with invalid observables format."""
+        with (
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+                mock_runtime_service,
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.load_circuit",
+                return_value={
+                    "status": "success",
+                    "circuit": Mock(name="circuit"),
+                },
+            ),
+        ):
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables=[],  # Empty list
+            )
+
+            assert result["status"] == "error"
+            assert "cannot be empty" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_run_estimator_backend_not_found(self, mock_runtime_service):
+        """Test run_estimator when specified backend doesn't exist."""
+        with (
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+                mock_runtime_service,
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.load_circuit",
+                return_value={
+                    "status": "success",
+                    "circuit": Mock(name="circuit"),
+                },
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp",
+                return_value=Mock(name="hamiltonian"),
+            ),
+        ):
+            mock_runtime_service.backend.side_effect = Exception("Backend not found")
+
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables="ZZ",
+                backend_name="nonexistent_backend",
+            )
+
+            assert result["status"] == "error"
+            assert "not found" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_run_estimator_job_submission_failure(self, mock_runtime_service):
+        """Test run_estimator when job submission fails."""
+        with (
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+                mock_runtime_service,
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.load_circuit",
+                return_value={
+                    "status": "success",
+                    "circuit": Mock(name="circuit", parameters=[]),
+                },
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.SparsePauliOp",
+                return_value=Mock(
+                    name="hamiltonian", apply_layout=Mock(return_value=Mock())
+                ),
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.generate_preset_pass_manager",
+                return_value=Mock(
+                    run=Mock(return_value=Mock(name="isa_circuit", layout=Mock()))
+                ),
+            ),
+            patch(
+                "qiskit_ibm_runtime_mcp_server.ibm_runtime.EstimatorV2",
+            ) as mock_estimator_cls,
+        ):
+            backend = Mock(name="backend")
+            backend.name = "ibm_example"
+            mock_runtime_service.least_busy.return_value = backend
+
+            mock_estimator = Mock()
+            mock_estimator.run.side_effect = Exception("Job submission error")
+            mock_estimator_cls.return_value = mock_estimator
+
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables="ZZ",
+            )
+
+            assert result["status"] == "error"
+            assert "Failed to run estimator" in result["message"]
 
 
 class TestRunSampler:
