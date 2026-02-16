@@ -1685,9 +1685,10 @@ async def run_estimator(
                         "message": "observables list cannot be empty",
                     }
 
-                # Check if it's a list of tuples (weighted) or strings
-                if isinstance(observables[0], tuple):
-                    # List of (Pauli, coefficient) tuples
+                # Check if it's a list of tuples/lists (weighted) or strings
+                # Note: JSON serialization converts tuples to lists, so we check both
+                if isinstance(observables[0], (tuple, list)):
+                    # List of (Pauli, coefficient) tuples/lists
                     hamiltonian = SparsePauliOp.from_list(observables)
                 else:
                     # List of Pauli strings (equal weights)
