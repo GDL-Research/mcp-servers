@@ -1369,6 +1369,60 @@ cx q[0], q[1];
             )
 
     @pytest.mark.asyncio
+    async def test_run_estimator_invalid_optimization_level(self, mock_runtime_service):
+        """Test run_estimator with invalid optimization_level."""
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+            mock_runtime_service,
+        ):
+            # Test optimization_level too high
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables="ZZ",
+                optimization_level=5,  # Invalid: must be 0-3
+            )
+            assert result["status"] == "error"
+            assert "optimization_level must be between 0 and 3" in result["message"]
+            assert "got 5" in result["message"]
+
+            # Test optimization_level negative
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables="ZZ",
+                optimization_level=-1,  # Invalid: must be 0-3
+            )
+            assert result["status"] == "error"
+            assert "optimization_level must be between 0 and 3" in result["message"]
+            assert "got -1" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_run_estimator_invalid_resilience_level(self, mock_runtime_service):
+        """Test run_estimator with invalid resilience_level."""
+        with patch(
+            "qiskit_ibm_runtime_mcp_server.ibm_runtime.service",
+            mock_runtime_service,
+        ):
+            # Test resilience_level too high
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables="ZZ",
+                resilience_level=3,  # Invalid: must be 0-2
+            )
+            assert result["status"] == "error"
+            assert "resilience_level must be between 0 and 2" in result["message"]
+            assert "got 3" in result["message"]
+
+            # Test resilience_level negative
+            result = await run_estimator(
+                circuit=self.SAMPLE_QASM3,
+                observables="ZZ",
+                resilience_level=-1,  # Invalid: must be 0-2
+            )
+            assert result["status"] == "error"
+            assert "resilience_level must be between 0 and 2" in result["message"]
+            assert "got -1" in result["message"]
+
+    @pytest.mark.asyncio
     async def test_run_estimator_circuit_load_failure(self, mock_runtime_service):
         """Test run_estimator when circuit loading fails."""
         with (
